@@ -1,0 +1,44 @@
+{
+    "python.unitTest.unittestEnabled": false,
+    "python.unitTest.nosetestsEnabled": false,
+    "python.unitTest.pyTestEnabled": true,
+    "python.unitTest.pyTestPath": "pipenv",
+    "python.unitTest.pyTestArgs": [
+        "run",
+        "py.test",
+        "--cov",
+        "app",
+        "--cov-fail-under",
+        "85",
+        "-vv",
+        "test/unit"
+    ],
+    "python.linting.pylintEnabled": false,
+    "python.linting.ignorePatterns": [
+        ".vscode/*.py",
+        "**/site-packages/**/*.py",
+        "dist/**/*.py"
+    ],
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Path": "pipenv",
+    "python.linting.flake8Args": [
+        "run",
+        "flake8",
+        "app"
+    ],
+    "python.linting.pydocstyleEnabled": true,
+    "python.linting.pydocstylePath": "pipenv",
+    "python.linting.pydocstyleArgs": [
+        "run",
+        "pydocstyle",
+        "app"
+    ],
+    "python.formatting.autopep8Path": "pipenv",
+    "python.formatting.autopep8Args": [
+        "run",
+        "autopep8",
+        "--max-line-length=120",
+        "--ignore",
+        "E126,E226,E24,W503"
+    ]
+}

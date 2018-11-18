@@ -1,0 +1,213 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  This app forwards messages from the given SNS topic to the given Elasticsearch domain using Kinesis Firehose.
+
+Parameters:
+  SNSTopicArn:
+    Description: SNS Topic ARN whose messages should be sent to Elasticsearch.
+    Type: String
+  ElasticsearchDomainArn:
+    Description: ARN of the Elasticsearch Domain to write to.
+    Type: String
+  ElasticsearchIndexName:
+    Description: Elasticsearch index name to write to.
+    Type: String
+  ElasticsearchTypeName:
+    Description: The Elasticsearch type name that Amazon ES adds to documents when indexing data.
+    Type: String
+  SubscriptionFilterPolicy:
+    Description: >
+      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
+      processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+    Type: String
+    Default: ''
+  ElasticsearchIndexRotationPeriod:
+    Description: The frequency of Elasticsearch index rotation.
+    Type: String
+    Default: NoRotation
+  RetryDurationInSeconds:
+    Description: Number of seconds to retry if messages cannot be written to Elasticsearch index.
+    Type: Number
+    MinValue: 0
+    Default: 300
+  BackupPrefix:
+    Description: Prefix used for S3 backup files (messages are saved to S3 if they can't be written to the Elasticsearch cluster).
+    Type: String
+    Default: 'backup/'
+  BackupCompressionFormat:
+    Description: Compression format for S3 backup files (messages are saved to S3 if they can't be written to the Elasticsearch cluster).
+    Type: String
+    AllowedValues:
+      - UNCOMPRESSED
+      - GZIP
+      - ZIP
+      - Snappy
+    Default: UNCOMPRESSED
+
+Conditions:
+  FilterPolicyEnabled:
+    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+
+Resources:
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt MessageQueue.Arn
+      RawMessageDelivery: true
+      TopicArn: !Ref SNSTopicArn
+
+  MessageQueue:
+    Type: AWS::SQS::Queue
+
+  MessageQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref MessageQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: MessageQueuePolicy
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - sns.amazonaws.com
+            Action:
+              - sqs:SendMessage
+            Resource:
+              - !GetAtt MessageQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref SNSTopicArn
+
+  ProcessRecords:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: process_records.handler
+      Runtime: python3.6
+      MemorySize: 128
+      Timeout: 5
+      Environment:
+        Variables:
+          FIREHOSE_DELIVERY_STREAM_NAME: !Ref DeliveryStream
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - firehose:PutRecord
+            Resource:
+              - !Sub ${DeliveryStream.Arn}
+      Events:
+        SQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt MessageQueue.Arn
+            BatchSize: 10
+
+  DeliveryStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamType: DirectPut
+      ElasticsearchDestinationConfiguration:
+        DomainARN: !Ref ElasticsearchDomainArn
+        IndexName: !Ref ElasticsearchIndexName
+        TypeName: !Ref ElasticsearchTypeName
+        IndexRotationPeriod: !Ref ElasticsearchIndexRotationPeriod
+        RetryOptions:
+          DurationInSeconds: !Ref RetryDurationInSeconds
+        RoleARN: !GetAtt DeliveryStreamRole.Arn
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 5
+        S3BackupMode: FailedDocumentsOnly
+        S3Configuration:
+          BucketARN: !GetAtt Backups.Arn
+          RoleARN: !GetAtt DeliveryStreamRole.Arn
+          Prefix: !Ref BackupPrefix
+          BufferingHints:
+            IntervalInSeconds: 60
+            SizeInMBs: 5
+          CompressionFormat: !Ref BackupCompressionFormat
+
+  DeliveryStreamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - firehose.amazonaws.com
+            Action:
+            - sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Sub ${AWS::AccountId}
+      Policies:
+        - PolicyName: fh-policy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !GetAtt Backups.Arn
+                  - !Sub ${Backups.Arn}/*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*
+              - Effect: "Allow"
+                Action:
+                  - es:ESHttpGet
+                  - es:ESHttpPut
+                  - es:ESHttpPost
+                  - es:ESHttpHead
+                Resource:
+                  - !Sub ${ElasticsearchDomainArn}/*
+
+  Backups:
+    Type: AWS::S3::Bucket
+
+  FilterPolicy:
+    Condition: FilterPolicyEnabled
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt SetFilterPolicy.Arn
+      SubscriptionArn: !Ref Subscription
+      FilterPolicy: !Ref SubscriptionFilterPolicy
+
+  SetFilterPolicy:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: set_filter_policy.handler
+      Runtime: python3.6
+      MemorySize: 128
+      Timeout: 5
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - sns:SetSubscriptionAttributes
+            Resource:
+              - !Sub ${SNSTopicArn}
+
+Outputs:
+  BackupBucketName:
+    Description: Backup bucket name
+    Value: !Ref Backups
+  BackupBucketArn:
+    Description: Backup bucket name
+    Value: !GetAtt Backups.Arn
