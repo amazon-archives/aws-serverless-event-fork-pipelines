@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  This app sets up a message replay buffer for an SNS topic and subscription pipeline for use in disaster recovery scenarios.
+
+Parameters:
+  SNSTopicArn:
+    Description: SNS Topic ARN whose messages should be saved for replay.
+    Type: String
+  DestinationSQSQueueName:
+    Description: >
+      Name of destination SQS Queue where replay messages should be sent in a disaster recovery scenario. The app assumes the queue
+      is in the same account and region as this app.
+    Type: String
+  SubscriptionFilterPolicy:
+    Description: >
+      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
+      processed by this app. Since this app is used to buffer messages for replay to another SQS queue that's also subscribed to the SNS topic,
+      its subscription filter policy should match the subscription filter policy of the pipeline it will replay messages to. See
+      https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+    Type: String
+    Default: ''
+
+Conditions:
+  FilterPolicyEnabled:
+    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+
+Resources:
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt ReplayBuffer.Arn
+      RawMessageDelivery: true
+      TopicArn: !Ref SNSTopicArn
+
+  ReplayBuffer:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+
+  ReplayBufferPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref ReplayBuffer
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: ReplayBufferPolicy
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - sns.amazonaws.com
+            Action:
+              - sqs:SendMessage
+            Resource:
+              - !GetAtt ReplayBuffer.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref SNSTopicArn
+
+  ReplayMessages:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: replay_messages.handler
+      Runtime: python3.6
+      MemorySize: 128
+      Timeout: 5
+      Environment:
+        Variables:
+          DESTINATION_SQS_QUEUE_NAME: !Ref DestinationSQSQueueName
+      Policies:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
+        - Statement:
+            Effect: Allow
+            Action:
+              - sqs:GetQueueUrl
+              - sqs:SendMessageBatch
+            Resource:
+              - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DestinationSQSQueueName}
+
+  ReplayMessagesESM:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      EventSourceArn: !GetAtt ReplayBuffer.Arn
+      FunctionName: !Ref ReplayMessages
+      Enabled: false
+
+  FilterPolicy:
+    Condition: FilterPolicyEnabled
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt SetFilterPolicy.Arn
+      SubscriptionArn: !Ref Subscription
+      FilterPolicy: !Ref SubscriptionFilterPolicy
+
+  SetFilterPolicy:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: set_filter_policy.handler
+      Runtime: python3.6
+      MemorySize: 128
+      Timeout: 5
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - sns:SetSubscriptionAttributes
+            Resource:
+              - !Sub ${SNSTopicArn}
+
+Outputs:
+  ReplayMessagesFunctionName:
+    Description: Replay messages Lambda function name
+    Value: !Ref ReplayMessages
+  ReplayMessagesFunctionArn:
+    Description: Replay messages Lambda function ARN
+    Value: !GetAtt ReplayMessages.Arn
+  ReplayMessagesEventSourceMappingId:
+    Description: Id of event source mapping of Replay buffer SQS queue to ReplayMessages Lambda function.
+    Value: !Ref ReplayMessagesESM
