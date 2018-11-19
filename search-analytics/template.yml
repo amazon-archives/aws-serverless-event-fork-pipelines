@@ -30,6 +30,7 @@ Parameters:
     Description: Number of seconds to retry if messages cannot be written to Elasticsearch index.
     Type: Number
     MinValue: 0
+    MaxValue: 7200
     Default: 300
   BackupPrefix:
     Description: Prefix used for S3 backup files (messages are saved to S3 if they can't be written to the Elasticsearch cluster).

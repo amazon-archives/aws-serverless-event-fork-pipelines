@@ -14,7 +14,7 @@ This repository includes the following serverless apps:
 
 1. [Storage and Backup](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/storage-backup/README.md) - Processing pipeline that saves topic messages to an Amazon S3 bucket for use as backups or other purposes, e.g., to query with Amazon Athena.
 1. [Search and Analytics](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/search-analytics/README.md) - Processing pipeline that saves topic messages to an AWS Elasticsearch cluster for search and analytics.
-1. [Message Replay Buffer](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/message-replay/README.md) - Processing pipeline that saves topic messages to a replay buffer. In a disaster recovery scenario, messages from up to 14 days ago can be replayed back to another processing pipeline.
+1. [Message Replay](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/message-replay/README.md) - Processing pipeline that saves topic messages to a replay buffer SQS queue. In a disaster recovery scenario, messages from up to 14 days ago can be replayed back to another processing pipeline's SQS queue.
 1. SNS Fork Example (TODO: link to SAR app page) - Example application showing how the above pipelines can be used in an AWS SAM application.
 
 ## Deploying the SNS Fork Example app

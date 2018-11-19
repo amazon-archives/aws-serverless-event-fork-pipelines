@@ -20,6 +20,13 @@ Parameters:
       https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
     Default: ''
+  ReplayBufferRetentionPeriodInSeconds:
+    Description: >
+      Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay buffer.
+    Type: Number
+    MinValue: 60
+    MaxValue: 1209600
+    Default: 1209600
 
 Conditions:
   FilterPolicyEnabled:
@@ -37,7 +44,7 @@ Resources:
   ReplayBuffer:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600
+      MessageRetentionPeriod: !Ref ReplayBufferRetentionPeriodInSeconds
 
   ReplayBufferPolicy:
     Type: AWS::SQS::QueuePolicy
