@@ -176,11 +176,14 @@ Resources:
                   - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*
               - Effect: "Allow"
                 Action:
+                  - es:DescribeElasticsearchDomain
+                  - es:DescribeElasticsearchDomains
+                  - es:DescribeElasticsearchDomainConfig
                   - es:ESHttpGet
                   - es:ESHttpPut
                   - es:ESHttpPost
-                  - es:ESHttpHead
                 Resource:
+                  - !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
                   - !Sub
                       - ${SearchDomainArn}/*
                       - SearchDomainArn: !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
