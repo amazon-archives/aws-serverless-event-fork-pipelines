@@ -1,0 +1,13 @@
+version: 0.2
+phases:
+  install:
+    commands:
+    - make init
+  build:
+    commands:
+    - make
+    - make package
+artifacts:
+  files:
+    - dist/packaged-template.yml
+  discard-paths: yes
