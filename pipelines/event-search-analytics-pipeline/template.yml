@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This app forwards messages from the given SNS topic to the given Elasticsearch domain using Kinesis Firehose.
+  This app forwards events from the given SNS topic to the given Elasticsearch domain using Kinesis Firehose.
 
 Parameters:
   SNSTopicArn:
-    Description: SNS Topic ARN whose messages should be sent to Elasticsearch.
+    Description: SNS Topic ARN whose events should be sent to Elasticsearch.
     Type: String
   ElasticsearchDomainArn:
     Description: ARN of the Elasticsearch Domain to write to.
@@ -18,7 +18,7 @@ Parameters:
     Type: String
   SubscriptionFilterPolicy:
     Description: >
-      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
+      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events 
       processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
     Default: ''
@@ -27,17 +27,17 @@ Parameters:
     Type: String
     Default: NoRotation
   RetryDurationInSeconds:
-    Description: Number of seconds to retry if messages cannot be written to Elasticsearch index.
+    Description: Number of seconds to retry if events cannot be written to Elasticsearch index.
     Type: Number
     MinValue: 0
     MaxValue: 7200
     Default: 300
   BackupPrefix:
-    Description: Prefix used for S3 backup files (messages are saved to S3 if they can't be written to the Elasticsearch cluster).
+    Description: Prefix used for S3 backup files (events are saved to S3 if they can't be written to the Elasticsearch cluster).
     Type: String
     Default: 'backup/'
   BackupCompressionFormat:
-    Description: Compression format for S3 backup files (messages are saved to S3 if they can't be written to the Elasticsearch cluster).
+    Description: Compression format for S3 backup files (events are saved to S3 if they can't be written to the Elasticsearch cluster).
     Type: String
     AllowedValues:
       - UNCOMPRESSED

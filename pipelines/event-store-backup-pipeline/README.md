@@ -1,13 +1,13 @@
-## SNS Fork Storage and Backup
+## SNS Fork: Storage and Backup Pipeline
 
-This Serverless application provides an SNS Fork processing pipeline that saves topic messages to an Amazon S3 bucket for use as backups or other purposes, e.g., to query with Amazon Athena.
+This Serverless application provides an SNS Fork processing pipeline that saves topic events to an Amazon S3 bucket for use as backups or other purposes, e.g., to query with Amazon Athena.
 
 ## Architecture
 
 ![SNS Fork Backup and Storage Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/storage-backup/images/storage-backup-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
-1. An AWS Lambda function reads messages from the SQS queue and publishes them to an Amazon Kinesis Data Firehose Delivery Stream, which saves them to an Amazon S3 bucket.
+1. An AWS Lambda function reads events from the SQS queue and publishes them to an Amazon Kinesis Data Firehose Delivery Stream, which saves them to an Amazon S3 bucket.
 
 ## Installation
 
@@ -21,10 +21,10 @@ This app is meant to be used as part of a larger application, so the recommended
         ApplicationId: TODO
         SemanticVersion: 1.0.0
       Parameters:
-        # SNS Topic ARN whose messages should be backed up to S3.
-        SNSTopicArn: !Ref MessageTopic
+        # SNS Topic ARN whose events should be backed up to S3.
+        SNSTopicArn: !Ref EventTopic
         # SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering
-        # for messages processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+        # for events processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
         #SubscriptionFilterPolicy: '' # Uncomment to override default value
         # Prefix used for S3 backup files
         #BackupPrefix: backup/ # Uncomment to override default value
@@ -36,8 +36,8 @@ Alternatively, you can deploy the application into your account manually via the
 
 ### Parameters
 
-1. `SNSTopicArn` (required) - SNS Topic ARN whose messages should be backuped up to S3.
-1. `SubscriptionFilterPolicy` (optional) - SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages processed by this app. See [the documentation](https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html) for details. The default behavior is to use no subscription filter policy so the app will backup all messages sent to the SNS topic.
+1. `SNSTopicArn` (required) - SNS Topic ARN whose events should be backed up to S3.
+1. `SubscriptionFilterPolicy` (optional) - SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events processed by this app. See [the documentation](https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html) for details. The default behavior is to use no subscription filter policy so the app will backup all events sent to the SNS topic.
 1. `BackupPrefix` (optional) - A prefix that Kinesis Data Firehose adds to the files that it delivers to the Amazon S3 bucket. If not specified, the default value of `backup/` is used.
 1. `BackupCompressionFormat` (optional) - The type of compression that Kinesis Data Firehose uses to compress the data that it delivers to the Amazon S3 bucket. For valid values, see the `CompressionFormat` content for the [S3DestinationConfiguration](https://docs.aws.amazon.com/firehose/latest/APIReference/API_S3DestinationConfiguration.html) data type in the *Amazon Kinesis Data Firehose API Reference*.
 
