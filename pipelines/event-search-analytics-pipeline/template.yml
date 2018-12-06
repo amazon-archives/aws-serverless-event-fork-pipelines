@@ -7,15 +7,18 @@ Parameters:
   SNSTopicArn:
     Description: SNS Topic ARN whose events should be sent to Elasticsearch.
     Type: String
-  ElasticsearchDomainArn:
-    Description: ARN of the Elasticsearch Domain to write to.
-    Type: String
   ElasticsearchIndexName:
     Description: Elasticsearch index name to write to.
     Type: String
   ElasticsearchTypeName:
     Description: The Elasticsearch type name that Amazon ES adds to documents when indexing data.
     Type: String
+  ElasticsearchDomainArn:
+    Description: >
+      This parameter can be used to specify the ARN of an external Elasticsearch Domain that this app should write events to. If no value is given,
+      the app creates its own ElasticSearch domain and writes events to it.
+    Type: String
+    Default: ''
   SubscriptionFilterPolicy:
     Description: >
       SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events 
@@ -49,6 +52,8 @@ Parameters:
 Conditions:
   FilterPolicyEnabled:
     !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+  CreateElasticsearchDomain:
+    !Equals [!Ref ElasticsearchDomainArn, '']
 
 Resources:
   Subscription:
@@ -113,7 +118,7 @@ Resources:
     Properties:
       DeliveryStreamType: DirectPut
       ElasticsearchDestinationConfiguration:
-        DomainARN: !Ref ElasticsearchDomainArn
+        DomainARN: !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
         IndexName: !Ref ElasticsearchIndexName
         TypeName: !Ref ElasticsearchTypeName
         IndexRotationPeriod: !Ref ElasticsearchIndexRotationPeriod
@@ -176,7 +181,9 @@ Resources:
                   - es:ESHttpPost
                   - es:ESHttpHead
                 Resource:
-                  - !Sub ${ElasticsearchDomainArn}/*
+                  - !Sub
+                      - ${SearchDomainArn}/*
+                      - SearchDomainArn: !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
 
   Backups:
     Type: AWS::S3::Bucket
@@ -205,6 +212,23 @@ Resources:
             Resource:
               - !Sub ${SNSTopicArn}
 
+  SearchDomain:
+    Condition: CreateElasticsearchDomain
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      ElasticsearchVersion: '6.3'
+      ElasticsearchClusterConfig:
+        InstanceCount: 2
+        ZoneAwarenessEnabled: true
+        InstanceType: m3.medium.elasticsearch
+        DedicatedMasterEnabled: true
+        DedicatedMasterType: m3.medium.elasticsearch
+        DedicatedMasterCount: 3
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: 20
+
 Outputs:
   BackupBucketName:
     Description: Backup bucket name
@@ -212,3 +236,15 @@ Outputs:
   BackupBucketArn:
     Description: Backup bucket name
     Value: !GetAtt Backups.Arn
+  ElasticsearchDomainName:
+    Description: Name of Elasticsearch domain created by this app
+    Value: !Ref SearchDomain
+    Condition: CreateElasticsearchDomain
+  ElasticsearchDomainArn:
+    Description: ARN of Elasticsearch domain created by this app
+    Value: !GetAtt SearchDomain.DomainArn
+    Condition: CreateElasticsearchDomain
+  ElasticsearchDomainEndpoint:
+    Description: Endpoint of Elasticsearch domain created by this app
+    Value: !GetAtt SearchDomain.DomainEndpoint
+    Condition: CreateElasticsearchDomain

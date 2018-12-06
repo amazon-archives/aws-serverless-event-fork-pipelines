@@ -49,7 +49,7 @@ Alternatively, you can deploy the application into your account manually via the
 
 ### Parameters
 
-1. `SNSTopicArn` (required) - SNS Topic ARN whose events should be backed up to S3.
+1. `SNSTopicArn` (required) - SNS Topic ARN whose events should be sent to the ElasticSearch domain.
 1. `ElasticsearchDomainArn` (required) - ARN of the Elasticsearch Domain to write to.
 1. `ElasticsearchIndexName` (required) - Elasticsearch index name to write to.
 1. `ElasticsearchTypeName` (required) - The Elasticsearch type name that Amazon ES adds to documents when indexing data.
