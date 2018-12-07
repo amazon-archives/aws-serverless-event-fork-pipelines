@@ -1,40 +1,107 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: ecommerce-app
+Description: >
+  Checkout event processing pipeline for the ecommerce example app.
 
 Parameters:
+  SNSTopicArn:
+    Description: Checkout events SNS Topic ARN
+    Type: String
   LogLevel:
     Type: String
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
     Default: INFO
 
 Resources:
-  MyFunction:
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt Queue.Arn
+      RawMessageDelivery: true
+      TopicArn: !Ref SNSTopicArn
+
+  Queue:
+    Type: AWS::SQS::Queue
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref Queue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: QueuePolicy
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - sns.amazonaws.com
+            Action:
+              - sqs:SendMessage
+            Resource:
+              - !GetAtt Queue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref SNSTopicArn
+
+  ProcessRecords:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: myfunction.handler
+      Handler: process_records.handler
       Runtime: python3.6
       Tracing: Active
-      Timeout: 60
+      Timeout: 5
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          TABLE_NAME: !Ref MyTable
+          TABLE_NAME: !Ref Orders
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Orders
+      Events:
+        SQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt Queue.Arn
+            BatchSize: 10
 
-  MyTable:
-    Type: AWS::Serverless::SimpleTable
+  Orders:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      # TODO: iterate on schema
+      AttributeDefinitions:
+        - AttributeName: CustomerId
+          AttributeType: S
+        - AttributeName: DateOrderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: CustomerId
+          KeyType: HASH
+        - AttributeName: DateOrderId
+          KeyType: RANGE
 
 Outputs:
-  MyFunctionName:
+  ProcessRecordsFunctionName:
     Description: "Lambda Function Name"
-    Value: !Ref MyFunction
-  MyFunctionArn:
+    Value: !Ref ProcessRecords
+  ProcessRecordsFunctionArn:
     Description: "Lambda Function ARN"
-    Value: !GetAtt MyFunction.Arn
-  MyTableName:
-    Description: "Table Name"
-    Value: !Ref MyTable
-  MyTableArn:
-    Description: "Table ARN"
-    Value: !GetAtt MyTable.Arn
+    Value: !GetAtt ProcessRecords.Arn
+  OrdersName:
+    Description: "Orders table Name"
+    Value: !Ref Orders
+  OrdersArn:
+    Description: "Orders table ARN"
+    Value: !GetAtt Orders.Arn
+  QueueUrl:
+    Description: "Checkout events queue URL"
+    Value: !Ref Queue
+  QueueArn:
+    Description: "Checkout events queue ARN"
+    Value: !GetAtt Queue.Arn
+  QueueName:
+    Description: "Checkout events queue name"
+    Value: !GetAtt Queue.QueueName
