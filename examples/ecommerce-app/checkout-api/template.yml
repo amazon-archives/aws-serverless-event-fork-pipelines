@@ -9,32 +9,84 @@ Parameters:
     Default: INFO
 
 Resources:
-  MyFunction:
+  Checkout:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: myfunction.handler
+      Handler: api.checkout
       Runtime: python3.6
       Tracing: Active
-      Timeout: 60
+      Timeout: 5
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          TABLE_NAME: !Ref MyTable
+          TOPIC_ARN: !Ref CheckoutEvents
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt CheckoutEvents.TopicName
+      Events:
+        CheckoutApi:
+          Type: Api
+          Properties:
+            Path: /checkout
+            Method: post
 
-  MyTable:
-    Type: AWS::Serverless::SimpleTable
+
+  CheckoutEvents:
+    Type: AWS::SNS::Topic
+
+  Orders:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ../../checkout-pipeline/dist/packaged-template.yml
+      Parameters:
+        SNSTopicArn: !Ref CheckoutEvents
+        LogLevel: !Ref LogLevel
+
+  OrdersReplay:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ../../../../pipelines/event-replay-pipeline/dist/template.yml
+      Parameters:
+        SNSTopicArn: !Ref CheckoutEvents
+        DestinationSQSQueueName: !GetAtt Orders.Outputs.QueueName
+        ReplayBufferRetentionPeriodInSeconds: '1209600'
+
+  Backup:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ../../../../pipelines/event-store-backup-pipeline/dist/template.yml
+      Parameters:
+        SNSTopicArn: !Ref CheckoutEvents
+        BackupCompressionFormat: GZIP
+        # TODO: remove sensitive data
+
+  Analytics:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ../../../../pipelines/event-search-analytics-pipeline/dist/template.yml
+      Parameters:
+        SNSTopicArn: !Ref CheckoutEvents
+        ElasticsearchIndexName: checkout_events
+        ElasticsearchTypeName: checkout
+        SubscriptionFilterPolicy: |
+          {
+              "amount": [
+                  { "numeric": [ ">=", 100 ] }
+              ]
+          }
+        # TODO: remove sensitive data
 
 Outputs:
-  MyFunctionName:
-    Description: "Lambda Function Name"
-    Value: !Ref MyFunction
-  MyFunctionArn:
-    Description: "Lambda Function ARN"
-    Value: !GetAtt MyFunction.Arn
-  MyTableName:
-    Description: "Table Name"
-    Value: !Ref MyTable
-  MyTableArn:
-    Description: "Table ARN"
-    Value: !GetAtt MyTable.Arn
+  CheckoutFunctionName:
+    Description: "Checkout API handler Function Name"
+    Value: !Ref Checkout
+  CheckoutFunctionArn:
+    Description: "Checkout API handler Function ARN"
+    Value: !GetAtt Checkout.Arn
+  CheckoutEventsTopicName:
+    Description: "Checkout events Topic Name"
+    Value: !GetAtt CheckoutEvents.TopicName
+  CheckoutEventsTopicArn:
+    Description: "Checkout events Topic ARN"
+    Value: !Ref CheckoutEvents

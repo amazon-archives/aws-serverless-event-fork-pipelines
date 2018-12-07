@@ -16,6 +16,7 @@ cfn-lint = "*"
 aws-sam-cli = "*"
 awscli = "*"
 pytest = "*"
+pytest-mock = "*"
 pytest-cov = "*"
 
 [requires]

@@ -10,4 +10,6 @@ my_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, my_path + '/../../src/')
 
 # set expected config environment variables to test constants
-os.environ['TABLE_NAME'] = test_constants.TABLE_NAME
+os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+os.environ['TOPIC_ARN'] = test_constants.TOPIC_ARN
+os.environ['LOG_LEVEL'] = test_constants.LOG_LEVEL
