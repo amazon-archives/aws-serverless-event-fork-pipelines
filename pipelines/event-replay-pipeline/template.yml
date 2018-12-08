@@ -27,6 +27,10 @@ Parameters:
     MinValue: 60
     MaxValue: 1209600
     Default: 1209600
+  LogLevel:
+    Type: String
+    Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
+    Default: INFO
 
 Conditions:
   FilterPolicyEnabled:
@@ -70,13 +74,14 @@ Resources:
   ReplayMessages:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: app/
+      CodeUri: src/
       Handler: replay_messages.handler
       Runtime: python3.6
       MemorySize: 128
       Timeout: 5
       Environment:
         Variables:
+          LOG_LEVEL: !Ref LogLevel
           DESTINATION_SQS_QUEUE_NAME: !Ref DestinationSQSQueueName
       Policies:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
@@ -107,11 +112,14 @@ Resources:
   SetFilterPolicy:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: app/
+      CodeUri: src/
       Handler: set_filter_policy.handler
       Runtime: python3.6
       MemorySize: 128
       Timeout: 5
+      Environment:
+        Variables:
+          LOG_LEVEL: !Ref LogLevel
       Policies:
         - Statement:
             Effect: Allow

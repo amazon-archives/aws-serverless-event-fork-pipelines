@@ -48,6 +48,10 @@ Parameters:
       - ZIP
       - Snappy
     Default: UNCOMPRESSED
+  LogLevel:
+    Type: String
+    Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
+    Default: INFO
 
 Conditions:
   FilterPolicyEnabled:
@@ -91,13 +95,14 @@ Resources:
   ProcessRecords:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: app/
+      CodeUri: src/
       Handler: process_records.handler
       Runtime: python3.6
       MemorySize: 128
       Timeout: 5
       Environment:
         Variables:
+          LOG_LEVEL: !Ref LogLevel
           FIREHOSE_DELIVERY_STREAM_NAME: !Ref DeliveryStream
       Policies:
         - Statement:
@@ -202,11 +207,14 @@ Resources:
   SetFilterPolicy:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: app/
+      CodeUri: src/
       Handler: set_filter_policy.handler
       Runtime: python3.6
       MemorySize: 128
       Timeout: 5
+      Environment:
+        Variables:
+          LOG_LEVEL: !Ref LogLevel
       Policies:
         - Statement:
             Effect: Allow

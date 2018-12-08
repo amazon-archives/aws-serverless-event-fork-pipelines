@@ -30,18 +30,18 @@ init:
 
 compile:
 	mkdir -p $(BUILD_DIR)
-	pipenv run flake8 app
-	pipenv run pydocstyle app
+	pipenv run flake8 src
+	pipenv run pydocstyle src
 	pipenv run cfn-lint template.yml
 
 build: compile
 
 package: compile
-	cp -r template.yml app $(BUILD_DIR)
+	cp -r template.yml src $(BUILD_DIR)
 
 	# package dependencies in lib dir
 	pipenv lock --requirements > $(BUILD_DIR)/requirements.txt
-	pipenv run pip install -t $(BUILD_DIR)/app/lib -r $(BUILD_DIR)/requirements.txt
+	pipenv run pip install -t $(BUILD_DIR)/src/lib -r $(BUILD_DIR)/requirements.txt
 
 	# replace code local references with S3
-	pipenv run sam package --template-file $(BUILD_DIR)/template.yml --s3-bucket $(PACKAGE_BUCKET) --output-template-file $(BUILD_DIR)/packaged-app.yml
+	pipenv run sam package --template-file $(BUILD_DIR)/template.yml --s3-bucket $(PACKAGE_BUCKET) --output-template-file $(BUILD_DIR)/packaged-template.yml
