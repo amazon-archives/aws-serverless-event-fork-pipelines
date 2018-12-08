@@ -33,6 +33,7 @@ compile:
 	pipenv run flake8 src
 	pipenv run pydocstyle src
 	pipenv run cfn-lint template.yml
+	pipenv run py.test --cov=src --cov-fail-under=85 -vv test/unit
 
 build: compile
 

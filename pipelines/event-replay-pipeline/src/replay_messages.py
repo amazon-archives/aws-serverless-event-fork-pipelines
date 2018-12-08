@@ -26,7 +26,7 @@ def handler(event, context):
         Entries=entries
     )
     LOG.debug('SQS response: %s', response)
-    if response['Failed']:
+    if response.get('Failed'):
         raise RuntimeError('Failed to send messages to destination queue: queue={}, failures={}'.format(
                 DESTINATION_SQS_QUEUE_URL, response['Failed']
         ))
