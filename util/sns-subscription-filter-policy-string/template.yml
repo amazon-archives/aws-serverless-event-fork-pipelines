@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  This app provides a custom resource that allows an SNS Topic Subscription's filter policy to be managed as a JSON string instead of
+  a JSON object, required by the AWS::SNS::Subscription resource type. This allows subscription filters to be passed into apps as template
+  parameters, which do not allow JSON objects, but will allow JSON as a string.
+
+Parameters:
+  LogLevel:
+    Type: String
+    Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
+    Default: INFO
+  SNSTopicArn:
+    Description: >
+      ARN of the SNS Topic being subscribed to.
+    Type: String
+  SubscriptionArn:
+    Description: >
+      ARN of the SNS Topic Subscription to apply the filter policy to.
+    Type: String
+  SubscriptionFilterPolicy:
+    Description: >
+      SNS Topic Subscription FilterPolicy as a JSON string. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+    Type: String
+
+# TODO: remove conditions once AWS::Serverless::Application supports Condition. Then parent app can set condition on the entire app.
+Conditions:
+  FilterPolicyEnabled:
+    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+
+Resources:
+  FilterPolicy:
+    Condition: FilterPolicyEnabled
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt SetFilterPolicy.Arn
+      SubscriptionArn: !Ref SubscriptionArn
+      FilterPolicy: !Ref SubscriptionFilterPolicy
+
+  SetFilterPolicy:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: set_filter_policy.handler
+      Runtime: python3.6
+      Tracing: Active
+      Timeout: 5
+      Environment:
+        Variables:
+          LOG_LEVEL: !Ref LogLevel
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - sns:SetSubscriptionAttributes
+            Resource:
+              - !Sub ${SNSTopicArn}
+
+Outputs:
+  SetFilterPolicyFunctionName:
+    Description: "SetFilterPolicy Lambda Function Name"
+    Value: !Ref SetFilterPolicy
+  SetFilterPolicyFunctionArn:
+    Description: "SetFilterPolicy Lambda Function ARN"
+    Value: !GetAtt SetFilterPolicy.Arn
