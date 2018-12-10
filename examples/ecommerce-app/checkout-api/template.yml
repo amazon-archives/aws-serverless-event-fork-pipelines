@@ -38,7 +38,7 @@ Resources:
   Orders:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../checkout-pipeline/dist/packaged-template.yml
+      Location: ../../checkout-pipeline/dist/template.yml
       Parameters:
         SNSTopicArn: !Ref CheckoutEvents
         LogLevel: !Ref LogLevel
@@ -81,6 +81,9 @@ Resources:
         # TODO: remove sensitive data
 
 Outputs:
+  CheckoutApiUri:
+    Description: "Checkout API Prod stage URL"
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/checkout
   CheckoutFunctionName:
     Description: "Checkout API handler Function Name"
     Value: !Ref Checkout
