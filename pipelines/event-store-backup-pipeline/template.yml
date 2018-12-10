@@ -75,7 +75,7 @@ Resources:
       CodeUri: src/
       Handler: process_records.handler
       Runtime: python3.6
-      MemorySize: 128
+      Tracing: Active
       Timeout: 5
       Environment:
         Variables:
