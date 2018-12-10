@@ -32,9 +32,10 @@ Parameters:
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
     Default: INFO
 
-Conditions:
-  FilterPolicyEnabled:
-    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+# TODO: uncomment once AWS::Serverless::Application supports Condition
+#Conditions:
+#  FilterPolicyEnabled:
+#    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
 Resources:
   Subscription:
@@ -102,31 +103,16 @@ Resources:
       Enabled: false
 
   FilterPolicy:
-    Condition: FilterPolicyEnabled
-    Type: AWS::CloudFormation::CustomResource
+    Type: AWS::Serverless::Application
+    # TODO: uncomment once AWS::Serverless::Application supports Condition
+    #Condition: FilterPolicyEnabled
     Properties:
-      ServiceToken: !GetAtt SetFilterPolicy.Arn
-      SubscriptionArn: !Ref Subscription
-      FilterPolicy: !Ref SubscriptionFilterPolicy
-
-  SetFilterPolicy:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/
-      Handler: set_filter_policy.handler
-      Runtime: python3.6
-      MemorySize: 128
-      Timeout: 5
-      Environment:
-        Variables:
-          LOG_LEVEL: !Ref LogLevel
-      Policies:
-        - Statement:
-            Effect: Allow
-            Action:
-              - sns:SetSubscriptionAttributes
-            Resource:
-              - !Sub ${SNSTopicArn}
+      Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
+      Parameters:
+        SNSTopicArn: !Ref SNSTopicArn
+        SubscriptionArn: !Ref Subscription
+        SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
+        LogLevel: !Ref LogLevel
 
 Outputs:
   ReplayMessagesFunctionName:

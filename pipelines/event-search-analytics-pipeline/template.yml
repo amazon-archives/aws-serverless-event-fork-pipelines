@@ -54,8 +54,9 @@ Parameters:
     Default: INFO
 
 Conditions:
-  FilterPolicyEnabled:
-    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+  # TODO: uncomment once AWS::Serverless::Application supports Condition
+  #FilterPolicyEnabled:
+  #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
   CreateElasticsearchDomain:
     !Equals [!Ref ElasticsearchDomainArn, '']
 
@@ -197,31 +198,16 @@ Resources:
     Type: AWS::S3::Bucket
 
   FilterPolicy:
-    Condition: FilterPolicyEnabled
-    Type: AWS::CloudFormation::CustomResource
+    Type: AWS::Serverless::Application
+    # TODO: uncomment once AWS::Serverless::Application supports Condition
+    #Condition: FilterPolicyEnabled
     Properties:
-      ServiceToken: !GetAtt SetFilterPolicy.Arn
-      SubscriptionArn: !Ref Subscription
-      FilterPolicy: !Ref SubscriptionFilterPolicy
-
-  SetFilterPolicy:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/
-      Handler: set_filter_policy.handler
-      Runtime: python3.6
-      MemorySize: 128
-      Timeout: 5
-      Environment:
-        Variables:
-          LOG_LEVEL: !Ref LogLevel
-      Policies:
-        - Statement:
-            Effect: Allow
-            Action:
-              - sns:SetSubscriptionAttributes
-            Resource:
-              - !Sub ${SNSTopicArn}
+      Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
+      Parameters:
+        SNSTopicArn: !Ref SNSTopicArn
+        SubscriptionArn: !Ref Subscription
+        SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
+        LogLevel: !Ref LogLevel
 
   SearchDomain:
     Condition: CreateElasticsearchDomain
