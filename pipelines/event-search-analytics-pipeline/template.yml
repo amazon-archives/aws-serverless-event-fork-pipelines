@@ -48,6 +48,13 @@ Parameters:
       - ZIP
       - Snappy
     Default: UNCOMPRESSED
+  DataTransformationLambdaFunctionArn:
+    Description: >
+      ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
+      Kinesis Firehose to transformation incoming events before they are saved to Elasticsearch. For example, you could use this to remove sensitive
+      data to meet compliance regulations.
+    Type: String
+    Default: ''
   LogLevel:
     Type: String
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
@@ -57,6 +64,8 @@ Conditions:
   # TODO: uncomment once AWS::Serverless::Application supports Condition
   #FilterPolicyEnabled:
   #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+  DataTransformationEnabled:
+    !Not [!Equals [!Ref DataTransformationLambdaFunctionArn, '']]
   CreateElasticsearchDomain:
     !Equals [!Ref ElasticsearchDomainArn, '']
 
@@ -143,6 +152,15 @@ Resources:
             IntervalInSeconds: 60
             SizeInMBs: 5
           CompressionFormat: !Ref BackupCompressionFormat
+        ProcessingConfiguration: !If
+          - DataTransformationEnabled
+          - Enabled: true
+            Processors:
+              - Type: Lambda
+                Parameters:
+                  - ParameterName: LambdaArn
+                    ParameterValue: !Ref DataTransformationLambdaFunctionArn
+          - !Ref AWS::NoValue
 
   DeliveryStreamRole:
     Type: AWS::IAM::Role
@@ -193,6 +211,14 @@ Resources:
                   - !Sub
                       - ${SearchDomainArn}/*
                       - SearchDomainArn: !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
+              - !If
+                  - DataTransformationEnabled
+                  - Effect: Allow
+                    Action:
+                      - lambda:InvokeFunction
+                    Resource:
+                      - !Ref DataTransformationLambdaFunctionArn
+                  - !Ref AWS::NoValue
 
   Backups:
     Type: AWS::S3::Bucket

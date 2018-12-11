@@ -26,15 +26,24 @@ Parameters:
       - ZIP
       - Snappy
     Default: UNCOMPRESSED
+  DataTransformationLambdaFunctionArn:
+    Description: >
+      ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
+      Kinesis Firehose to transformation incoming events before they are saved to S3. For example, you could use this to remove sensitive
+      data to meet compliance regulations.
+    Type: String
+    Default: ''
   LogLevel:
     Type: String
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
     Default: INFO
 
-# TODO: uncomment once AWS::Serverless::Application supports Condition
-#Conditions:
-#  FilterPolicyEnabled:
-#    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+Conditions:
+  DataTransformationEnabled:
+    !Not [!Equals [!Ref DataTransformationLambdaFunctionArn, '']]
+  # TODO: uncomment once AWS::Serverless::Application supports Condition
+  #FilterPolicyEnabled:
+  #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
 Resources:
   Subscription:
@@ -99,7 +108,7 @@ Resources:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
       DeliveryStreamType: DirectPut
-      S3DestinationConfiguration:
+      ExtendedS3DestinationConfiguration:
         BucketARN: !GetAtt Backups.Arn
         RoleARN: !GetAtt DeliveryStreamRole.Arn
         Prefix: !Ref BackupPrefix
@@ -107,6 +116,15 @@ Resources:
           IntervalInSeconds: 60
           SizeInMBs: 5
         CompressionFormat: !Ref BackupCompressionFormat
+        ProcessingConfiguration: !If
+          - DataTransformationEnabled
+          - Enabled: true
+            Processors:
+              - Type: Lambda
+                Parameters:
+                  - ParameterName: LambdaArn
+                    ParameterValue: !Ref DataTransformationLambdaFunctionArn
+          - !Ref AWS::NoValue
 
   DeliveryStreamRole:
     Type: AWS::IAM::Role
@@ -144,6 +162,14 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*
+              - !If
+                  - DataTransformationEnabled
+                  - Effect: Allow
+                    Action:
+                      - lambda:InvokeFunction
+                    Resource:
+                      - !Ref DataTransformationLambdaFunctionArn
+                  - !Ref AWS::NoValue
 
   Backups:
     Type: AWS::S3::Bucket

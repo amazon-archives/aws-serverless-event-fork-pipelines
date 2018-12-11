@@ -31,6 +31,17 @@ Resources:
             Path: /checkout
             Method: post
 
+  RemoveSensitiveData:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: remove_sensitive_data.handler
+      Runtime: python3.6
+      Tracing: Active
+      Timeout: 60
+      Environment:
+        Variables:
+          LOG_LEVEL: !Ref LogLevel
 
   CheckoutEvents:
     Type: AWS::SNS::Topic
@@ -61,7 +72,7 @@ Resources:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
         BackupCompressionFormat: GZIP
-        # TODO: remove sensitive data
+        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
 
   Analytics:
     Type: AWS::Serverless::Application
@@ -78,7 +89,7 @@ Resources:
                   { "numeric": [ ">=", 100 ] }
               ]
           }
-        # TODO: remove sensitive data
+        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
 
 Outputs:
   CheckoutApiUri:
