@@ -20,20 +20,24 @@ def handler(event, context):
         LOG.info('No records in event')
         return
 
-    for record in event['Records']:
-        request = _to_request(record)
-        LOG.debug('Replaying event to SQS queue: queue URL=%s, request=%s', DESTINATION_SQS_QUEUE_URL, request)
-        response = QUEUE.send_message(**request)
-        LOG.debug('SQS response: %s', response)
+    entries = [_to_request_record(str(i), r) for i, r in enumerate(event['Records'])]
+    LOG.debug('Replaying events to SQS queue: queue URL=%s, entries=%s', DESTINATION_SQS_QUEUE_URL, entries)
+    response = QUEUE.send_messages(Entries=entries)
+    LOG.debug('SQS response: %s', response)
+    if response.get('Failed'):
+        raise RuntimeError('Failed to send messages to destination queue: queue URL={}, failures={}'.format(
+            DESTINATION_SQS_QUEUE_URL, response['Failed']
+        ))
 
 
-def _to_request(record):
+def _to_request_record(id, record):
     # SQS event lowercases message attribute property names so have to capitalize them again before sending to SQS
     message_attributes = {attr_name: {_capitalize(attr_prop_name): attr_prop_value
                                       for (attr_prop_name, attr_prop_value) in attr_props.items()
                                       if attr_prop_value}
                           for (attr_name, attr_props) in record['messageAttributes'].items()}
     return {
+        'Id': id,
         'MessageBody': record['body'],
         'MessageAttributes': message_attributes
     }
