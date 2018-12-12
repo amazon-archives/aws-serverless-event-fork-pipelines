@@ -13,3 +13,4 @@ sys.path.insert(0, my_path + '/../../src/')
 os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
 os.environ['TABLE_NAME'] = test_constants.TABLE_NAME
 os.environ['LOG_LEVEL'] = test_constants.LOG_LEVEL
+os.environ['BUG_ENABLED'] = test_constants.BUG_ENABLED

@@ -57,6 +57,7 @@ Resources:
         Variables:
           LOG_LEVEL: !Ref LogLevel
           TABLE_NAME: !Ref Orders
+          BUG_ENABLED: 'false'
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref Orders
@@ -71,7 +72,6 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
-      # TODO: iterate on schema
       AttributeDefinitions:
         - AttributeName: CustomerId
           AttributeType: S

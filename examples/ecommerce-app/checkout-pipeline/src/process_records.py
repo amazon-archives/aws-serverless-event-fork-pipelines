@@ -4,6 +4,7 @@
 import lambdainit  # noqa: F401
 
 import boto3
+from decimal import Decimal
 import json
 
 import config
@@ -29,8 +30,20 @@ def handler(event, context):
 
 
 def _to_item(checkout_event):
-    # TODO: copy more attributes
-    return {
+    item = {
         'CustomerId': str(checkout_event['customer']['id']),
-        'DateOrderId': '{}-{}'.format(checkout_event['date'], checkout_event['id'])
+        'DateOrderId': '{}-{}'.format(checkout_event['date'], checkout_event['id']),
+        'PaymentId': checkout_event['payment']['id'],
+        'PaymentAmount': Decimal(str(checkout_event['payment']['amount'])),
+        'PaymentCurrency': checkout_event['payment']['currency'],
+        'TotalQuantity': sum([i['quantity'] for i in checkout_event['items']]),
     }
+
+    if config.BUG_ENABLED:
+        LOG.info("Data corruption bug enabled.")
+        item['PaymentId'] = 'CORRUPTED!'
+        item['PaymentAmount'] = 'CORRUPTED!'
+        item['PaymentCurrency'] = 'CORRUPTED!'
+        item['TotalQuantity'] = 'CORRUPTED!'
+
+    return item

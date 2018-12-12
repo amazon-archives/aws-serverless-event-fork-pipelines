@@ -13,7 +13,20 @@ def test_handler(mocker):
             'status': 'confirmed',
             'customer': {
                 'id': 100
-            }
+            },
+            'payment': {
+                'id': 200,
+                'amount': 99.99,
+                'currency': 'usd'
+            },
+            'items': [
+                {
+                    'quantity': 1
+                },
+                {
+                    'quantity': 2
+                },
+            ],
         },
         {
             'id': 2,
@@ -21,7 +34,20 @@ def test_handler(mocker):
             'status': 'confirmed',
             'customer': {
                 'id': 101
-            }
+            },
+            'payment': {
+                'id': 201,
+                'amount': 49.99,
+                'currency': 'usd'
+            },
+            'items': [
+                {
+                    'quantity': 3
+                },
+                {
+                    'quantity': 5
+                },
+            ],
         }
     ]
     process_records.handler(_input_event(checkout_events), None)
