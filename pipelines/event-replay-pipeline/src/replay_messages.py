@@ -10,6 +10,7 @@ import lambdalogging
 LOG = lambdalogging.getLogger(__name__)
 SQS = boto3.client('sqs')
 DESTINATION_SQS_QUEUE_URL = SQS.get_queue_url(QueueName=config.DESTINATION_SQS_QUEUE_NAME)['QueueUrl']
+QUEUE = boto3.resource('sqs').Queue(DESTINATION_SQS_QUEUE_URL)
 
 
 def handler(event, context):
@@ -19,26 +20,20 @@ def handler(event, context):
         LOG.info('No records in event')
         return
 
-    entries = [_to_request_record(index, record) for index, record in enumerate(event['Records'])]
-    LOG.debug('Sending entries to SQS queue: queue URL=%s, entries=%s', DESTINATION_SQS_QUEUE_URL, entries)
-    response = SQS.send_message_batch(
-        QueueUrl=DESTINATION_SQS_QUEUE_URL,
-        Entries=entries
-    )
-    LOG.debug('SQS response: %s', response)
-    if response.get('Failed'):
-        raise RuntimeError('Failed to send messages to destination queue: queue={}, failures={}'.format(
-                DESTINATION_SQS_QUEUE_URL, response['Failed']
-        ))
+    for record in event['Records']:
+        request = _to_request(record)
+        LOG.debug('Replaying event to SQS queue: queue URL=%s, request=%s', DESTINATION_SQS_QUEUE_URL, request)
+        response = QUEUE.send_message(**request)
+        LOG.debug('SQS response: %s', response)
 
 
-def _to_request_record(id, record):
+def _to_request(record):
     # SQS event lowercases message attribute property names so have to capitalize them again before sending to SQS
     message_attributes = {attr_name: {_capitalize(attr_prop_name): attr_prop_value
-                                      for (attr_prop_name, attr_prop_value) in attr_props.items()}
+                                      for (attr_prop_name, attr_prop_value) in attr_props.items()
+                                      if attr_prop_value}
                           for (attr_name, attr_props) in record['messageAttributes'].items()}
     return {
-        'Id': str(id),
         'MessageBody': record['body'],
         'MessageAttributes': message_attributes
     }

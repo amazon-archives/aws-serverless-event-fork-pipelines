@@ -90,7 +90,7 @@ Resources:
             Effect: Allow
             Action:
               - sqs:GetQueueUrl
-              - sqs:SendMessageBatch
+              - sqs:SendMessage
             Resource:
               - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DestinationSQSQueueName}
 

@@ -12,18 +12,22 @@ def replay_messages(mocker):
     mock_sqs_client.get_queue_url.return_value = {'QueueUrl': QUEUE_URL}
 
     mocker.patch.object(boto3, 'client')
+    mocker.patch.object(boto3, 'resource')
     boto3.client.return_value = mock_sqs_client
+    boto3.resource.return_value = mock_sqs_client
+    mock_queue = MagicMock()
+    mock_sqs_client.Topic.return_value = mock_queue
     import replay_messages
     return replay_messages
 
 
 def test_handler_no_records(mocker, replay_messages):
     replay_messages.handler({}, None)
-    replay_messages.SQS.send_message_batch.assert_not_called()
+    replay_messages.QUEUE.send_message.assert_not_called()
 
 
 def test_handler_success(mocker, replay_messages):
-    replay_messages.SQS.send_message_batch.return_value = {}
+    replay_messages.QUEUE.send_message.return_value = {}
 
     event = {
         'Records': [
@@ -32,10 +36,14 @@ def test_handler_success(mocker, replay_messages):
                 'messageAttributes': {
                     'fooAttr1': {
                         'dataType': 'String',
+                        'stringListValues': [],
+                        'binaryListValues': [],
                         'stringValue': 'fooAttr1Value'
                     },
                     'fooAttr2': {
                         'dataType': 'String',
+                        'stringListValues': [],
+                        'binaryListValues': [],
                         'stringValue': 'fooAttr2Value'
                     }
                 }
@@ -45,10 +53,14 @@ def test_handler_success(mocker, replay_messages):
                 'messageAttributes': {
                     'barAttr1': {
                         'dataType': 'String',
+                        'stringListValues': [],
+                        'binaryListValues': [],
                         'stringValue': 'barAttr1Value'
                     },
                     'barAttr2': {
                         'dataType': 'String',
+                        'stringListValues': [],
+                        'binaryListValues': [],
                         'stringValue': 'barAttr2Value'
                     }
                 }
@@ -57,59 +69,29 @@ def test_handler_success(mocker, replay_messages):
     }
     replay_messages.handler(event, None)
 
-    expected = [
-        {
-            'Id': '0',
-            'MessageBody': 'foo',
-            'MessageAttributes': {
-                'fooAttr1': {
-                    'DataType': 'String',
-                    'StringValue': 'fooAttr1Value'
-                },
-                'fooAttr2': {
-                    'DataType': 'String',
-                    'StringValue': 'fooAttr2Value'
-                }
-            }
-        },
-        {
-            'Id': '1',
-            'MessageBody': 'bar',
-            'MessageAttributes': {
-                'barAttr1': {
-                    'DataType': 'String',
-                    'StringValue': 'barAttr1Value'
-                },
-                'barAttr2': {
-                    'DataType': 'String',
-                    'StringValue': 'barAttr2Value'
-                }
+    replay_messages.QUEUE.send_message.assert_any_call(
+        MessageBody='foo',
+        MessageAttributes={
+            'fooAttr1': {
+                'DataType': 'String',
+                'StringValue': 'fooAttr1Value'
+            },
+            'fooAttr2': {
+                'DataType': 'String',
+                'StringValue': 'fooAttr2Value'
             }
         }
-    ]
-    replay_messages.SQS.send_message_batch.assert_any_call(
-        QueueUrl=QUEUE_URL,
-        Entries=expected
     )
-
-
-def test_handler_sqs_failure(mocker, replay_messages):
-    replay_messages.SQS.send_message_batch.return_value = {
-        'Failed': [
-            {
-                'Id': '0'
+    replay_messages.QUEUE.send_message.assert_any_call(
+        MessageBody='bar',
+        MessageAttributes={
+            'barAttr1': {
+                'DataType': 'String',
+                'StringValue': 'barAttr1Value'
+            },
+            'barAttr2': {
+                'DataType': 'String',
+                'StringValue': 'barAttr2Value'
             }
-        ]
-    }
-
-    event = {
-        'Records': [
-            {
-                'body': 'foo',
-                'messageAttributes': {}
-            }
-        ]
-    }
-
-    with pytest.raises(RuntimeError):
-        replay_messages.handler(event, None)
+        }
+    )
