@@ -26,6 +26,29 @@ Parameters:
       - ZIP
       - Snappy
     Default: UNCOMPRESSED
+  EnableBucketEncryption:
+    Description: Set to true to enable server-side encryption on the S3 backup bucket using the default aws/s3 AWS KMS master key.
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  BufferingIntervalInSeconds:
+    Description: >
+      Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
+      See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details.
+    Type: Number
+    MinValue: 60
+    MaxValue: 900
+    Default: 300
+  BufferingSizeInMBs:
+    Description: >
+      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationLambdaFunctionArn, you should
+      not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details.
+    Type: Number
+    MinValue: 1
+    MaxValue: 128
+    Default: 5
   DataTransformationLambdaFunctionArn:
     Description: >
       ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
@@ -41,6 +64,8 @@ Parameters:
 Conditions:
   DataTransformationEnabled:
     !Not [!Equals [!Ref DataTransformationLambdaFunctionArn, '']]
+  BucketEncryptionEnabled:
+    !Equals [!Ref EnableBucketEncryption, 'true']
   # TODO: uncomment once AWS::Serverless::Application supports Condition
   #FilterPolicyEnabled:
   #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
@@ -113,8 +138,8 @@ Resources:
         RoleARN: !GetAtt DeliveryStreamRole.Arn
         Prefix: !Ref BackupPrefix
         BufferingHints:
-          IntervalInSeconds: 60
-          SizeInMBs: 5
+          IntervalInSeconds: !Ref BufferingIntervalInSeconds
+          SizeInMBs: !Ref BufferingSizeInMBs
         CompressionFormat: !Ref BackupCompressionFormat
         ProcessingConfiguration: !If
           - DataTransformationEnabled
@@ -173,6 +198,13 @@ Resources:
 
   Backups:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption: !If
+        - BucketEncryptionEnabled
+        - ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: aws:kms
+        - !Ref AWS::NoValue
 
   FilterPolicy:
     Type: AWS::Serverless::Application

@@ -73,6 +73,9 @@ Resources:
         SNSTopicArn: !Ref CheckoutEvents
         BackupCompressionFormat: GZIP
         DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
+        BufferingIntervalInSeconds: '60'
+        BufferingSizeInMBs: '5'
+        EnableBucketEncryption: 'true'
 
   Analytics:
     Type: AWS::Serverless::Application
@@ -83,13 +86,16 @@ Resources:
         SNSTopicArn: !Ref CheckoutEvents
         ElasticsearchIndexName: checkout_events
         ElasticsearchTypeName: checkout
+        RetryDurationInSeconds: '30'
+        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
+        BufferingIntervalInSeconds: '60'
+        BufferingSizeInMBs: '5'
         SubscriptionFilterPolicy: |
           {
               "amount": [
                   { "numeric": [ ">=", 100 ] }
               ]
           }
-        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
 
 Outputs:
   CheckoutApiUri:
