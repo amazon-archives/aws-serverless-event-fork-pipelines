@@ -4,7 +4,7 @@ This Serverless application provides an SNS Fork processing pipeline that saves 
 
 ## Architecture
 
-![SNS Fork Backup and Storage Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/storage-backup/images/storage-backup-architecture.png)
+![SNS Fork Backup and Storage Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-store-backup-pipeline/images/event-storage-backup-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
 1. An AWS Lambda function reads events from the SQS queue and publishes them to an Amazon Kinesis Data Firehose Delivery Stream, which saves them to an Amazon S3 bucket.
