@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: checkout-api
+Description: >
+  This serverless application is an example of using the SNS Fork pattern pipeline apps in an e-commerce use case.
 
 Parameters:
   LogLevel:
@@ -49,7 +50,9 @@ Resources:
   Orders:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../checkout-pipeline/dist/template.yml
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-example-ecommerce-checkout-pipeline
+        SemanticVersion: 1.0.0
       Parameters:
         SNSTopicArn: !Ref CheckoutEvents
         LogLevel: !Ref LogLevel
@@ -57,7 +60,9 @@ Resources:
   OrdersReplay:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../../../pipelines/event-replay-pipeline/dist/template.yml
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-replay-pipeline
+        SemanticVersion: 1.0.0
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
@@ -67,7 +72,9 @@ Resources:
   Backup:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../../../pipelines/event-store-backup-pipeline/dist/template.yml
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-store-backup-pipeline
+        SemanticVersion: 1.0.0
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
@@ -80,7 +87,9 @@ Resources:
   Analytics:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../../../pipelines/event-search-analytics-pipeline/dist/template.yml
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-search-analytics-pipeline
+        SemanticVersion: 1.0.0
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
