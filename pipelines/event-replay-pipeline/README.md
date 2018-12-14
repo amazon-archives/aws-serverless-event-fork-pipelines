@@ -4,7 +4,7 @@ This Serverless application provides an SNS Fork processing pipeline that saves 
 
 ## Architecture
 
-![SNS Fork Event Replay Pipeline Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-replay-pipeline/images/message-replay-architecture.png)
+![SNS Fork Event Replay Pipeline Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-replay-pipeline/images/event-replay-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
 1. An AWS Lambda function is mapped to the SQS queue, but the event source is initially disabled.
