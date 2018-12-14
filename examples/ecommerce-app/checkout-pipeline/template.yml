@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Checkout event processing pipeline for the ecommerce example app.
+  This serverless application implements a SNS Fork pattern pipeline for checkout events in an example e-commerce application.
 
 Parameters:
   SNSTopicArn:
