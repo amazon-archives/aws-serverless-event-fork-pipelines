@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This app forwards events from the given SNS topic to the given Elasticsearch domain using Kinesis Firehose.
+  This Serverless application provides an SNS Fork pattern pipeline that saves topic events to an Amazon Elasticsearch Service cluster for search and analytics.
 
 Parameters:
   SNSTopicArn:
@@ -244,7 +244,9 @@ Resources:
     # TODO: uncomment once AWS::Serverless::Application supports Condition
     #Condition: FilterPolicyEnabled
     Properties:
-      Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/sns-subscription-filter-policy-string
+        SemanticVersion: 1.0.0
       Parameters:
         SNSTopicArn: !Ref SNSTopicArn
         SubscriptionArn: !Ref Subscription
@@ -273,7 +275,7 @@ Outputs:
     Description: Backup bucket name
     Value: !Ref Backups
   BackupBucketArn:
-    Description: Backup bucket name
+    Description: Backup bucket ARN
     Value: !GetAtt Backups.Arn
   ElasticsearchDomainName:
     Description: Name of Elasticsearch domain created by this app
