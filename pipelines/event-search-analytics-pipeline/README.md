@@ -4,7 +4,7 @@ This Serverless application provides an SNS Fork processing pipeline that saves 
 
 ## Architecture
 
-![SNS Fork Search and Analytics Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/search-analytics/images/search-analytics-architecture.png)
+![SNS Fork Search and Analytics Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-search-analytics-pipeline/images/event-search-analytics-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
 1. An AWS Lambda function reads events from the SQS queue and publishes them to an Amazon Kinesis Data Firehose Delivery Stream, which saves them to the given Amazon Elasticsearch Service Domain.
