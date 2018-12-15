@@ -12,20 +12,17 @@ This repository implements the SNS Fork Pattern as a suite of Serverless applica
 
 ## Serverless Applications
 
-This repository includes the following serverless apps:
+This repository showcases the following SNS Fork pattern serverless applications:
 
-1. [Storage and Backup](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/storage-backup/README.md) - Processing pipeline that saves topic messages to an Amazon S3 bucket for use as backups or other purposes, e.g., to query with Amazon Athena.
-1. [Search and Analytics](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/search-analytics/README.md) - Processing pipeline that saves topic messages to an AWS Elasticsearch cluster for search and analytics.
-1. [Message Replay](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/message-replay/README.md) - Processing pipeline that saves topic messages to a replay buffer SQS queue. In a disaster recovery scenario, messages from up to 14 days ago can be replayed back to another processing pipeline's SQS queue.
-1. SNS Fork Example (TODO: link to SAR app page) - Example application showing how the above pipelines can be used in an AWS SAM application.
+1. [Event Storage and Backup Pipeline](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/pipelines/event-storage-backup-pipeline/README.md) - Processing pipeline that saves topic messages to an Amazon S3 bucket for use as backups or other purposes, e.g., to query with Amazon Athena.
+1. [Event Search and Analytics Pipeline](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/pipelines/event-search-analytics-pipeline/README.md) - Processing pipeline that saves topic messages to an AWS Elasticsearch cluster for search and analytics.
+1. [Event Replay Pipeline](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/pipelines/event-replay-pipeline/README.md) - Processing pipeline that saves topic messages to a replay buffer SQS queue. In a disaster recovery scenario, messages from up to 14 days ago can be replayed back to another processing pipeline's SQS queue.
 
-## Deploying the SNS Fork Example app
+## Examples
 
-Deploying the SNS Fork Example application is simple using the Serverless Application Repository. There is no need to build or package the application from the repository source code. Simply follow these steps:
+This repository also contains the following example applications to demonstrate the SNS Fork pattern:
 
-1. [Create an AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) if you do not already have one and login.
-1. Go to the [sns-fork-example]() app's page on the Serverless Application Repository and click "Deploy".
-1. Edit the stack name if you would like and click "Deploy".
+1. [E-Commerce App](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/blob/master/examples/ecommerce-app/checkout-api/README.md) - An example of using the SNS Fork pattern pipeline apps in an e-commerce use case.
 
 ## License Summary
 
