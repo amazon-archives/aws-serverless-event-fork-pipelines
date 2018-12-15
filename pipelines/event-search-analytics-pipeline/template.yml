@@ -244,9 +244,7 @@ Resources:
     # TODO: uncomment once AWS::Serverless::Application supports Condition
     #Condition: FilterPolicyEnabled
     Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/sns-subscription-filter-policy-string
-        SemanticVersion: 1.0.0
+      Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
       Parameters:
         SNSTopicArn: !Ref SNSTopicArn
         SubscriptionArn: !Ref Subscription

@@ -50,9 +50,7 @@ Resources:
   Orders:
     Type: AWS::Serverless::Application
     Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-example-ecommerce-checkout-pipeline
-        SemanticVersion: 1.0.0
+      Location: ../../checkout-pipeline/dist/template.yml
       Parameters:
         SNSTopicArn: !Ref CheckoutEvents
         LogLevel: !Ref LogLevel
@@ -60,9 +58,7 @@ Resources:
   OrdersReplay:
     Type: AWS::Serverless::Application
     Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-replay-pipeline
-        SemanticVersion: 1.0.0
+      Location: ../../../../pipelines/event-replay-pipeline/dist/template.yml
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
@@ -72,9 +68,7 @@ Resources:
   Backup:
     Type: AWS::Serverless::Application
     Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-storage-backup-pipeline
-        SemanticVersion: 1.0.0
+      Location: ../../../../pipelines/event-storage-backup-pipeline/dist/template.yml
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
@@ -87,9 +81,7 @@ Resources:
   Analytics:
     Type: AWS::Serverless::Application
     Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-search-analytics-pipeline
-        SemanticVersion: 1.0.0
+      Location: ../../../../pipelines/event-search-analytics-pipeline/dist/template.yml
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEvents
