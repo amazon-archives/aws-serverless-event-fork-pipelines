@@ -73,7 +73,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-store-backup-pipeline
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:077246666028:applications/fork-event-storage-backup-pipeline
         SemanticVersion: 1.0.0
       Parameters:
         LogLevel: !Ref LogLevel
@@ -108,7 +108,7 @@ Resources:
 
 Outputs:
   CheckoutApiUri:
-    Description: "Checkout API Prod stage URL"
+    Description: "Checkout API Prod stage URI"
     Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/checkout
   CheckoutFunctionName:
     Description: "Checkout API handler Function Name"
@@ -117,7 +117,7 @@ Outputs:
     Description: "Checkout API handler Function ARN"
     Value: !GetAtt Checkout.Arn
   CheckoutEventsTopicName:
-    Description: "Checkout events Topic Name"
+    Description: "Checkout events SNS Topic Name"
     Value: !GetAtt CheckoutEvents.TopicName
   CheckoutEventsTopicArn:
     Description: "Checkout events Topic ARN"

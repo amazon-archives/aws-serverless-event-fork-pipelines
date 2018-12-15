@@ -9,7 +9,7 @@ This serverless application is an example of using the SNS Fork pattern pipeline
 1. The e-commerce application takes orders from buyers through a RESTful API, which is hosted by Amazon API Gateway and is backed by an AWS Lambda function named “Checkout”.
 1. This function publishes all orders received to an Amazon SNS topic named “CheckoutEvents”, which in turn fans out the orders to four different pipelines.
 1. The first pipeline is the regular checkout processing pipeline designed and implemented by the e-commerce application owner, which saves all orders to an Amazon DynamoDB table.
-1. The second pipeline is the fork-event-store-backup-pipeline app, which is configured to remove sensitive data from the events and save them to a backup S3 bucket, compressed and encrypted.
+1. The second pipeline is the fork-event-storage-backup-pipeline app, which is configured to remove sensitive data from the events and save them to a backup S3 bucket, compressed and encrypted.
 1. The third pipeline is the fork-event-search-analytics-pipeline app, which is configured to save events for orders where the amount was greater than or equal to 100 USD to an Amazon Elasticsearch Service Domain.
 1. The fourth pipeline is the fork-event-replay-pipeline app, which is configured to buffer events for replay to the checkout pipeline in the event of a disaster scenario. The checkout pipeline's event processing functions comes with the ability to simulate a data corruption bug scenario to demo the replay app.
 
