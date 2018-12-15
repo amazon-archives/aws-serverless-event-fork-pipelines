@@ -1,0 +1,18 @@
+version: 0.2
+phases:
+  install:
+    commands:
+    - cd util/sns-subscription-filter-policy-string && make init && cd -
+    - cd pipelines/event-store-backup-pipeline && make init && cd -
+    - cd pipelines/event-search-analytics-pipeline && make init && cd -
+    - cd pipelines/event-replay-pipeline && make init && cd -
+    - cd examples/ecommerce-app/checkout-pipeline && make init && cd -
+    - cd examples/ecommerce-app/checkout-api && make init && cd -
+  build:
+    commands:
+    - cd util/sns-subscription-filter-policy-string && make && cd -
+    - cd pipelines/event-store-backup-pipeline && make && cd -
+    - cd pipelines/event-search-analytics-pipeline && make && cd -
+    - cd pipelines/event-replay-pipeline && make && cd -
+    - cd examples/ecommerce-app/checkout-pipeline && make && cd -
+    - cd examples/ecommerce-app/checkout-api && make && cd -
