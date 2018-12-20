@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This app backs up messages from the given SNS topic to an S3 bucket using Kinesis Firehose.
+  This Amazon SNS Fork pipeline backs up events from the given Amazon SNS topic to an Amazon S3 bucket, using an Amazon Kinesis Data Firehose stream.
 
 Parameters:
   SNSTopicArn:
@@ -71,25 +71,25 @@ Conditions:
   #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
 Resources:
-  Subscription:
+  BackupSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
-      Endpoint: !GetAtt MessageQueue.Arn
+      Endpoint: !GetAtt BackupQueue.Arn
       RawMessageDelivery: true
       TopicArn: !Ref SNSTopicArn
 
-  MessageQueue:
+  BackupQueue:
     Type: AWS::SQS::Queue
 
-  MessageQueuePolicy:
+  BackupQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !Ref MessageQueue
+        - !Ref BackupQueue
       PolicyDocument:
         Version: '2012-10-17'
-        Id: MessageQueuePolicy
+        Id: BackupQueuePolicy
         Statement:
           - Effect: Allow
             Principal:
@@ -98,12 +98,12 @@ Resources:
             Action:
               - sqs:SendMessage
             Resource:
-              - !GetAtt MessageQueue.Arn
+              - !GetAtt BackupQueue.Arn
             Condition:
               ArnEquals:
                 aws:SourceArn: !Ref SNSTopicArn
 
-  ProcessRecords:
+  BackupFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -114,28 +114,28 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          FIREHOSE_DELIVERY_STREAM_NAME: !Ref DeliveryStream
+          FIREHOSE_DELIVERY_STREAM_NAME: !Ref BackupStream
       Policies:
         - Statement:
             Effect: Allow
             Action:
               - firehose:PutRecord
             Resource:
-              - !Sub ${DeliveryStream.Arn}
+              - !Sub ${BackupStream.Arn}
       Events:
-        SQS:
+        Mapping:
           Type: SQS
           Properties:
-            Queue: !GetAtt MessageQueue.Arn
+            Queue: !GetAtt BackupQueue.Arn
             BatchSize: 10
 
-  DeliveryStream:
+  BackupStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
       DeliveryStreamType: DirectPut
       ExtendedS3DestinationConfiguration:
-        BucketARN: !GetAtt Backups.Arn
-        RoleARN: !GetAtt DeliveryStreamRole.Arn
+        BucketARN: !GetAtt BackupBucket.Arn
+        RoleARN: !GetAtt BackupStreamRole.Arn
         Prefix: !Ref BackupPrefix
         BufferingHints:
           IntervalInSeconds: !Ref BufferingIntervalInSeconds
@@ -151,7 +151,7 @@ Resources:
                     ParameterValue: !Ref DataTransformationLambdaFunctionArn
           - !Ref AWS::NoValue
 
-  DeliveryStreamRole:
+  BackupStreamRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -178,8 +178,8 @@ Resources:
                   - s3:ListBucketMultipartUploads
                   - s3:PutObject
                 Resource:
-                  - !GetAtt Backups.Arn
-                  - !Sub ${Backups.Arn}/*
+                  - !GetAtt BackupBucket.Arn
+                  - !Sub ${BackupBucket.Arn}/*
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -196,7 +196,7 @@ Resources:
                       - !Ref DataTransformationLambdaFunctionArn
                   - !Ref AWS::NoValue
 
-  Backups:
+  BackupBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketEncryption: !If
@@ -206,7 +206,7 @@ Resources:
                 SSEAlgorithm: aws:kms
         - !Ref AWS::NoValue
 
-  FilterPolicy:
+  BackupSubscriptionFilterPolicy:
     Type: AWS::Serverless::Application
     # TODO: uncomment once AWS::Serverless::Application supports Condition
     #Condition: FilterPolicyEnabled
@@ -214,14 +214,14 @@ Resources:
       Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
       Parameters:
         SNSTopicArn: !Ref SNSTopicArn
-        SubscriptionArn: !Ref Subscription
+        SubscriptionArn: !Ref BackupSubscription
         SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
         LogLevel: !Ref LogLevel
 
 Outputs:
   BackupBucketName:
-    Description: Backup bucket name
-    Value: !Ref Backups
+    Description: Backup S3 bucket name
+    Value: !Ref BackupBucket
   BackupBucketArn:
-    Description: Backup bucket name
-    Value: !GetAtt Backups.Arn
+    Description: Backup S3 bucket ARN
+    Value: !GetAtt BackupBucket.Arn

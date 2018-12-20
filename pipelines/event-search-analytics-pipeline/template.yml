@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This Serverless application provides an SNS Fork pattern pipeline that saves topic events to an Amazon Elasticsearch Service cluster for search and analytics.
+  This Amazon SNS Fork pipeline indexes events from the given Amazon SNS topic in an Amazon Elasticsearch Service domain for search and analytics, using an Amazon Kinesis Data Firehose stream.
 
 Parameters:
   SNSTopicArn:
@@ -82,29 +82,29 @@ Conditions:
   #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
   DataTransformationEnabled:
     !Not [!Equals [!Ref DataTransformationLambdaFunctionArn, '']]
-  CreateElasticsearchDomain:
+  CreateAnalyticsDomain:
     !Equals [!Ref ElasticsearchDomainArn, '']
 
 Resources:
-  Subscription:
+  AnalyticsSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
-      Endpoint: !GetAtt MessageQueue.Arn
+      Endpoint: !GetAtt AnalyticsQueue.Arn
       RawMessageDelivery: true
       TopicArn: !Ref SNSTopicArn
 
-  MessageQueue:
+  AnalyticsQueue:
     Type: AWS::SQS::Queue
 
-  MessageQueuePolicy:
+  AnalyticsQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !Ref MessageQueue
+        - !Ref AnalyticsQueue
       PolicyDocument:
         Version: '2012-10-17'
-        Id: MessageQueuePolicy
+        Id: AnalyticsQueuePolicy
         Statement:
           - Effect: Allow
             Principal:
@@ -113,12 +113,12 @@ Resources:
             Action:
               - sqs:SendMessage
             Resource:
-              - !GetAtt MessageQueue.Arn
+              - !GetAtt AnalyticsQueue.Arn
             Condition:
               ArnEquals:
                 aws:SourceArn: !Ref SNSTopicArn
 
-  ProcessRecords:
+  AnalyticsFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -129,40 +129,40 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          FIREHOSE_DELIVERY_STREAM_NAME: !Ref DeliveryStream
+          FIREHOSE_DELIVERY_STREAM_NAME: !Ref AnalyticsStream
       Policies:
         - Statement:
             Effect: Allow
             Action:
               - firehose:PutRecord
             Resource:
-              - !Sub ${DeliveryStream.Arn}
+              - !Sub ${AnalyticsStream.Arn}
       Events:
-        SQS:
+        Mapping:
           Type: SQS
           Properties:
-            Queue: !GetAtt MessageQueue.Arn
+            Queue: !GetAtt AnalyticsQueue.Arn
             BatchSize: 10
 
-  DeliveryStream:
+  AnalyticsStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
       DeliveryStreamType: DirectPut
       ElasticsearchDestinationConfiguration:
-        DomainARN: !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
+        DomainARN: !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref ElasticsearchDomainArn]
         IndexName: !Ref ElasticsearchIndexName
         TypeName: !Ref ElasticsearchTypeName
         IndexRotationPeriod: !Ref ElasticsearchIndexRotationPeriod
         RetryOptions:
           DurationInSeconds: !Ref RetryDurationInSeconds
-        RoleARN: !GetAtt DeliveryStreamRole.Arn
+        RoleARN: !GetAtt AnalyticsStreamRole.Arn
         BufferingHints:
           IntervalInSeconds: !Ref BufferingIntervalInSeconds
           SizeInMBs: !Ref BufferingSizeInMBs
         S3BackupMode: FailedDocumentsOnly
         S3Configuration:
-          BucketARN: !GetAtt Backups.Arn
-          RoleARN: !GetAtt DeliveryStreamRole.Arn
+          BucketARN: !GetAtt AnalyticsDeadLetterBucket.Arn
+          RoleARN: !GetAtt AnalyticsStreamRole.Arn
           Prefix: !Ref BackupPrefix
           BufferingHints:
             IntervalInSeconds: 60
@@ -178,7 +178,7 @@ Resources:
                     ParameterValue: !Ref DataTransformationLambdaFunctionArn
           - !Ref AWS::NoValue
 
-  DeliveryStreamRole:
+  AnalyticsStreamRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -205,8 +205,8 @@ Resources:
                   - s3:ListBucketMultipartUploads
                   - s3:PutObject
                 Resource:
-                  - !GetAtt Backups.Arn
-                  - !Sub ${Backups.Arn}/*
+                  - !GetAtt AnalyticsDeadLetterBucket.Arn
+                  - !Sub ${AnalyticsDeadLetterBucket.Arn}/*
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -223,10 +223,10 @@ Resources:
                   - es:ESHttpPut
                   - es:ESHttpPost
                 Resource:
-                  - !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
+                  - !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref ElasticsearchDomainArn]
                   - !Sub
                       - ${SearchDomainArn}/*
-                      - SearchDomainArn: !If [CreateElasticsearchDomain, !GetAtt SearchDomain.DomainArn, !Ref ElasticsearchDomainArn]
+                      - SearchDomainArn: !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref ElasticsearchDomainArn]
               - !If
                   - DataTransformationEnabled
                   - Effect: Allow
@@ -236,10 +236,10 @@ Resources:
                       - !Ref DataTransformationLambdaFunctionArn
                   - !Ref AWS::NoValue
 
-  Backups:
+  AnalyticsDeadLetterBucket:
     Type: AWS::S3::Bucket
 
-  FilterPolicy:
+  AnalyticsSubscriptionFilterPolicy:
     Type: AWS::Serverless::Application
     # TODO: uncomment once AWS::Serverless::Application supports Condition
     #Condition: FilterPolicyEnabled
@@ -247,12 +247,12 @@ Resources:
       Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
       Parameters:
         SNSTopicArn: !Ref SNSTopicArn
-        SubscriptionArn: !Ref Subscription
+        SubscriptionArn: !Ref AnalyticsSubscription
         SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
         LogLevel: !Ref LogLevel
 
-  SearchDomain:
-    Condition: CreateElasticsearchDomain
+  AnalyticsDomain:
+    Condition: CreateAnalyticsDomain
     Type: AWS::Elasticsearch::Domain
     Properties:
       ElasticsearchVersion: '6.3'
@@ -269,21 +269,21 @@ Resources:
         VolumeSize: 20
 
 Outputs:
-  BackupBucketName:
-    Description: Backup bucket name
-    Value: !Ref Backups
-  BackupBucketArn:
-    Description: Backup bucket ARN
-    Value: !GetAtt Backups.Arn
-  ElasticsearchDomainName:
-    Description: Name of Elasticsearch domain created by this app
-    Value: !Ref SearchDomain
-    Condition: CreateElasticsearchDomain
-  ElasticsearchDomainArn:
-    Description: ARN of Elasticsearch domain created by this app
-    Value: !GetAtt SearchDomain.DomainArn
-    Condition: CreateElasticsearchDomain
-  ElasticsearchDomainEndpoint:
-    Description: Endpoint of Elasticsearch domain created by this app
-    Value: !GetAtt SearchDomain.DomainEndpoint
-    Condition: CreateElasticsearchDomain
+  AnalyticsDeadLetterBucketName:
+    Description: Dead-letter S3 bucket name
+    Value: !Ref AnalyticsDeadLetterBucket
+  AnalyticsDeadLetterBucketArn:
+    Description: Dead-letter S3 bucket ARN
+    Value: !GetAtt AnalyticsDeadLetterBucket.Arn
+  AnalyticsDomainName:
+    Description: Analytics ES domain name
+    Value: !Ref AnalyticsDomain
+    Condition: CreateAnalyticsDomain
+  AnalyticsDomainArn:
+    Description: Analytics ES domain ARN
+    Value: !GetAtt AnalyticsDomain.DomainArn
+    Condition: CreateAnalyticsDomain
+  AnalyticsDomainEndpoint:
+    Description: Analytics ES domain endpoint
+    Value: !GetAtt AnalyticsDomain.DomainEndpoint
+    Condition: CreateAnalyticsDomain

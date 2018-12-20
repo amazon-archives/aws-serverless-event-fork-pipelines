@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This Serverless application provides an SNS Fork pattern pipeline that saves SNS topic events to a replay buffer SQS queue to replay back to another pipeline in a disaster recovery scenario.
+  This Amazon SNS Fork pipeline buffers events from the given Amazon SNS topic into an Amazon SQS queue, so it can replay these events back to another pipeline, in a disaster recovery scenario.
 
 Parameters:
   SNSTopicArn:
@@ -15,14 +15,14 @@ Parameters:
   SubscriptionFilterPolicy:
     Description: >
       SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
-      processed by this app. Since this app is used to buffer messages for replay to another SQS queue that's also subscribed to the SNS topic,
+      processed by this app. Since this app is used to buffer events for replay to another SQS queue that's also subscribed to the SNS topic,
       its subscription filter policy should match the subscription filter policy of the pipeline it will replay messages to. See
       https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
     Default: ''
-  ReplayBufferRetentionPeriodInSeconds:
+  ReplayQueueRetentionPeriodInSeconds:
     Description: >
-      Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay buffer.
+      Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay queue.
     Type: Number
     MinValue: 60
     MaxValue: 1209600
@@ -38,27 +38,27 @@ Parameters:
 #    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
 Resources:
-  Subscription:
+  ReplaySubscription:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
-      Endpoint: !GetAtt ReplayBuffer.Arn
+      Endpoint: !GetAtt ReplayQueue.Arn
       RawMessageDelivery: true
       TopicArn: !Ref SNSTopicArn
 
-  ReplayBuffer:
+  ReplayQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: !Ref ReplayBufferRetentionPeriodInSeconds
+      MessageRetentionPeriod: !Ref ReplayQueueRetentionPeriodInSeconds
 
-  ReplayBufferPolicy:
+  ReplayQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !Ref ReplayBuffer
+        - !Ref ReplayQueue
       PolicyDocument:
         Version: '2012-10-17'
-        Id: ReplayBufferPolicy
+        Id: ReplayQueuePolicy
         Statement:
           - Effect: Allow
             Principal:
@@ -67,12 +67,12 @@ Resources:
             Action:
               - sqs:SendMessage
             Resource:
-              - !GetAtt ReplayBuffer.Arn
+              - !GetAtt ReplayQueue.Arn
             Condition:
               ArnEquals:
                 aws:SourceArn: !Ref SNSTopicArn
 
-  ReplayMessages:
+  ReplayFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -94,15 +94,15 @@ Resources:
             Resource:
               - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DestinationSQSQueueName}
 
-  ReplayMessagesESM:
+  ReplayFunctionMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       BatchSize: 10
-      EventSourceArn: !GetAtt ReplayBuffer.Arn
-      FunctionName: !Ref ReplayMessages
+      EventSourceArn: !GetAtt ReplayQueue.Arn
+      FunctionName: !Ref ReplayFunction
       Enabled: false
 
-  FilterPolicy:
+  ReplaySubscriptionFilterPolicy:
     Type: AWS::Serverless::Application
     # TODO: uncomment once AWS::Serverless::Application supports Condition
     #Condition: FilterPolicyEnabled
@@ -110,17 +110,17 @@ Resources:
       Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
       Parameters:
         SNSTopicArn: !Ref SNSTopicArn
-        SubscriptionArn: !Ref Subscription
+        SubscriptionArn: !Ref ReplaySubscription
         SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
         LogLevel: !Ref LogLevel
 
 Outputs:
-  ReplayMessagesFunctionName:
-    Description: Replay messages Lambda function name
-    Value: !Ref ReplayMessages
-  ReplayMessagesFunctionArn:
-    Description: Replay messages Lambda function ARN
-    Value: !GetAtt ReplayMessages.Arn
-  ReplayMessagesEventSourceMappingId:
-    Description: Id of event source mapping of Replay buffer SQS queue to ReplayMessages Lambda function.
-    Value: !Ref ReplayMessagesESM
+  ReplayFunctionName:
+    Description: Replay Lambda function name
+    Value: !Ref ReplayFunction
+  ReplayFunctionArn:
+    Description: Replay Lambda function ARN
+    Value: !GetAtt ReplayFunction.Arn
+  ReplayFunctionMappingId:
+    Description: Identifier of the event source mapping that connects the Lambda function to the SQS queue
+    Value: !Ref ReplayFunctionMapping

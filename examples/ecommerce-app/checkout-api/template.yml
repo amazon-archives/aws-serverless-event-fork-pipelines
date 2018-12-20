@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This serverless application is an example of using the SNS Fork pattern pipeline apps in an e-commerce use case.
+  This serverless application is an example of using the Amazon SNS Fork pipelines in an e-commerce use case.
 
 Parameters:
   LogLevel:
@@ -10,7 +10,7 @@ Parameters:
     Default: INFO
 
 Resources:
-  Checkout:
+  CheckoutApiBackendFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -21,18 +21,18 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          TOPIC_ARN: !Ref CheckoutEvents
+          TOPIC_ARN: !Ref CheckoutEventsTopic
       Policies:
         - SNSPublishMessagePolicy:
-            TopicName: !GetAtt CheckoutEvents.TopicName
+            TopicName: !GetAtt CheckoutEventsTopic.TopicName
       Events:
-        CheckoutApi:
+        RestApi:
           Type: Api
           Properties:
             Path: /checkout
             Method: post
 
-  RemoveSensitiveData:
+  RemoveSensitiveDataFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -44,51 +44,51 @@ Resources:
         Variables:
           LOG_LEVEL: !Ref LogLevel
 
-  CheckoutEvents:
+  CheckoutEventsTopic:
     Type: AWS::SNS::Topic
 
-  Orders:
+  CheckoutPipeline:
     Type: AWS::Serverless::Application
     Properties:
       Location: ../../checkout-pipeline/dist/template.yml
       Parameters:
-        SNSTopicArn: !Ref CheckoutEvents
+        SNSTopicArn: !Ref CheckoutEventsTopic
         LogLevel: !Ref LogLevel
 
-  OrdersReplay:
+  ReplayPipeline:
     Type: AWS::Serverless::Application
     Properties:
       Location: ../../../../pipelines/event-replay-pipeline/dist/template.yml
       Parameters:
         LogLevel: !Ref LogLevel
-        SNSTopicArn: !Ref CheckoutEvents
-        DestinationSQSQueueName: !GetAtt Orders.Outputs.QueueName
-        ReplayBufferRetentionPeriodInSeconds: '1209600'
+        SNSTopicArn: !Ref CheckoutEventsTopic
+        DestinationSQSQueueName: !GetAtt CheckoutPipeline.Outputs.CheckoutQueueName
+        ReplayQueueRetentionPeriodInSeconds: '1209600'
 
-  Backup:
+  BackupPipeline:
     Type: AWS::Serverless::Application
     Properties:
       Location: ../../../../pipelines/event-storage-backup-pipeline/dist/template.yml
       Parameters:
         LogLevel: !Ref LogLevel
-        SNSTopicArn: !Ref CheckoutEvents
+        SNSTopicArn: !Ref CheckoutEventsTopic
         BackupCompressionFormat: GZIP
-        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
+        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveDataFunction.Arn
         BufferingIntervalInSeconds: '60'
         BufferingSizeInMBs: '5'
         EnableBucketEncryption: 'true'
 
-  Analytics:
+  AnalyticsPipeline:
     Type: AWS::Serverless::Application
     Properties:
       Location: ../../../../pipelines/event-search-analytics-pipeline/dist/template.yml
       Parameters:
         LogLevel: !Ref LogLevel
-        SNSTopicArn: !Ref CheckoutEvents
+        SNSTopicArn: !Ref CheckoutEventsTopic
         ElasticsearchIndexName: checkout_events
         ElasticsearchTypeName: checkout
         RetryDurationInSeconds: '30'
-        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveData.Arn
+        DataTransformationLambdaFunctionArn: !GetAtt RemoveSensitiveDataFunction.Arn
         BufferingIntervalInSeconds: '60'
         BufferingSizeInMBs: '5'
         SubscriptionFilterPolicy: |
@@ -100,17 +100,17 @@ Resources:
 
 Outputs:
   CheckoutApiUri:
-    Description: "Checkout API Prod stage URI"
+    Description: Checkout API Prod stage URI
     Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/checkout
-  CheckoutFunctionName:
-    Description: "Checkout API handler Function Name"
-    Value: !Ref Checkout
-  CheckoutFunctionArn:
-    Description: "Checkout API handler Function ARN"
-    Value: !GetAtt Checkout.Arn
+  CheckoutApiBackendFunctionName:
+    Description: Checkout API handler Function Name
+    Value: !Ref CheckoutApiBackendFunction
+  CheckoutApiBackendFunctionArn:
+    Description: Checkout API handler Function ARN
+    Value: !GetAtt CheckoutApiBackendFunction.Arn
   CheckoutEventsTopicName:
-    Description: "Checkout events SNS Topic Name"
-    Value: !GetAtt CheckoutEvents.TopicName
+    Description: Checkout events SNS topic name
+    Value: !GetAtt CheckoutEventsTopic.TopicName
   CheckoutEventsTopicArn:
-    Description: "Checkout events Topic ARN"
-    Value: !Ref CheckoutEvents
+    Description: Checkout events SNS topic ARN
+    Value: !Ref CheckoutEventsTopic

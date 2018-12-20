@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This serverless application implements a SNS Fork pattern pipeline for checkout events in an example e-commerce application.
+  This checkout pipeline is meant to be nested in the example e-commerce application that implements the Amazon SNS Fork pattern.
 
 Parameters:
   SNSTopicArn:
@@ -13,25 +13,25 @@ Parameters:
     Default: INFO
 
 Resources:
-  Subscription:
+  CheckoutSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       Protocol: sqs
-      Endpoint: !GetAtt Queue.Arn
+      Endpoint: !GetAtt CheckoutQueue.Arn
       RawMessageDelivery: true
       TopicArn: !Ref SNSTopicArn
 
-  Queue:
+  CheckoutQueue:
     Type: AWS::SQS::Queue
 
-  QueuePolicy:
+  CheckoutQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !Ref Queue
+        - !Ref CheckoutQueue
       PolicyDocument:
         Version: '2012-10-17'
-        Id: QueuePolicy
+        Id: CheckoutQueuePolicy
         Statement:
           - Effect: Allow
             Principal:
@@ -40,12 +40,12 @@ Resources:
             Action:
               - sqs:SendMessage
             Resource:
-              - !GetAtt Queue.Arn
+              - !GetAtt CheckoutQueue.Arn
             Condition:
               ArnEquals:
                 aws:SourceArn: !Ref SNSTopicArn
 
-  ProcessRecords:
+  CheckoutFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
@@ -56,19 +56,19 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          TABLE_NAME: !Ref Orders
+          TABLE_NAME: !Ref CheckoutTable
           BUG_ENABLED: 'false'
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref Orders
+            TableName: !Ref CheckoutTable
       Events:
-        SQS:
+        Mapping:
           Type: SQS
           Properties:
-            Queue: !GetAtt Queue.Arn
+            Queue: !GetAtt CheckoutQueue.Arn
             BatchSize: 10
 
-  Orders:
+  CheckoutTable:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
@@ -84,24 +84,24 @@ Resources:
           KeyType: RANGE
 
 Outputs:
-  ProcessRecordsFunctionName:
-    Description: "Lambda Function Name"
-    Value: !Ref ProcessRecords
-  ProcessRecordsFunctionArn:
-    Description: "Lambda Function ARN"
-    Value: !GetAtt ProcessRecords.Arn
-  OrdersName:
-    Description: "Orders table Name"
-    Value: !Ref Orders
-  OrdersArn:
-    Description: "Orders table ARN"
-    Value: !GetAtt Orders.Arn
-  QueueUrl:
-    Description: "Checkout events queue URL"
-    Value: !Ref Queue
-  QueueArn:
-    Description: "Checkout events queue ARN"
-    Value: !GetAtt Queue.Arn
-  QueueName:
-    Description: "Checkout events queue name"
-    Value: !GetAtt Queue.QueueName
+  CheckoutFunctionName:
+    Description: Checkout Lambda function name
+    Value: !Ref CheckoutFunction
+  CheckoutFunctionArn:
+    Description: Checkout Lambda function ARN
+    Value: !GetAtt CheckoutFunction.Arn
+  CheckoutTableName:
+    Description: Checkout DynamoDB table name
+    Value: !Ref CheckoutTable
+  CheckoutTableArn:
+    Description: Checkout DynamoDB table ARN
+    Value: !GetAtt CheckoutTable.Arn
+  CheckoutQueueUrl:
+    Description: Checkout SQS queue URL
+    Value: !Ref CheckoutQueue
+  CheckoutQueueArn:
+    Description: Checkout SQS queue ARN
+    Value: !GetAtt CheckoutQueue.Arn
+  CheckoutQueueName:
+    Description: Checkout SQS queue name
+    Value: !GetAtt CheckoutQueue.QueueName
