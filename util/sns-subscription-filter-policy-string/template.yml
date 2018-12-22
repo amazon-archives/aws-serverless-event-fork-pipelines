@@ -4,6 +4,21 @@ Description: >
   This utility app provides a custom resource that allows an SNS Topic Subscription's filter policy to be specified as a JSON string instead
   of a JSON object so it can be passed into apps as a template parameter.
 
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: sns-subscription-filter-policy-string
+    Description: >
+      This utility app provides a custom resource that allows an SNS Topic Subscription's filter policy to be specified as a JSON string instead
+      of a JSON object so it can be passed into apps as a template parameter.
+    Author: AWS
+    SpdxLicenseId: MIT-0
+    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: ../README.md
+    Labels: [sns, subscription-filter-policy]
+    HomePageUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern/tree/master/util/sns-subscription-filter-policy-string
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern/tree/1.0.0/util/sns-subscription-filter-policy-string
+
 Parameters:
   LogLevel:
     Type: String

@@ -3,6 +3,20 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   This serverless application is an example of using the Amazon SNS Fork pipelines in an e-commerce use case.
 
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: fork-example-ecommerce-checkout-api
+    Description: >
+      This serverless application is an example of using the Amazon SNS Fork pipelines in an e-commerce use case.
+    Author: AWS
+    SpdxLicenseId: MIT-0
+    LicenseUrl: ../../../../LICENSE
+    ReadmeUrl: ../README.md
+    Labels: [sns, sns-fork-pattern, example, e-commerce]
+    HomePageUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern/tree/1.0.0/examples/ecommerce-app/checkout-api
+
 Parameters:
   LogLevel:
     Type: String

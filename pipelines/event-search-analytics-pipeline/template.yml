@@ -1,7 +1,23 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  This Amazon SNS Fork pipeline indexes events from the given Amazon SNS topic in an Amazon Elasticsearch Service domain for search and analytics, using an Amazon Kinesis Data Firehose stream.
+  This Amazon SNS Fork pipeline indexes events from the given Amazon SNS topic in an Amazon Elasticsearch Service domain for search
+  and analytics, using an Amazon Kinesis Data Firehose stream.
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: fork-event-search-analytics-pipeline
+    Description: >
+      This Amazon SNS Fork pipeline indexes events from the given Amazon SNS topic in an Amazon Elasticsearch Service domain for search
+      and analytics, using an Amazon Kinesis Data Firehose stream.
+    Author: AWS
+    SpdxLicenseId: MIT-0
+    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: ../README.md
+    Labels: [sns, sns-fork-pattern, event, search, analytics]
+    HomePageUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern/tree/1.0.0/pipelines/event-search-analytics-pipeline
 
 Parameters:
   SNSTopicArn:
