@@ -93,7 +93,7 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: replay_messages.handler
-      Runtime: python3.6
+      Runtime: python3.7
       Tracing: Active
       Timeout: 5
       Environment:

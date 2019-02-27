@@ -1,5 +1,5 @@
 SHELL := /bin/sh
-PY_VERSION := 3.6
+PY_VERSION := 3.7
 
 export PYTHONUNBUFFERED := 1
 

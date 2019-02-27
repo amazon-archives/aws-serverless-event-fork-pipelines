@@ -56,7 +56,7 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: set_filter_policy.handler
-      Runtime: python3.6
+      Runtime: python3.7
       Tracing: Active
       Timeout: 5
       Environment:

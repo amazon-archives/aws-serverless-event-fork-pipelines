@@ -124,7 +124,7 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: process_records.handler
-      Runtime: python3.6
+      Runtime: python3.7
       Tracing: Active
       Timeout: 5
       Environment:

@@ -29,7 +29,7 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: api.checkout
-      Runtime: python3.6
+      Runtime: python3.7
       Tracing: Active
       Timeout: 5
       Environment:
@@ -51,7 +51,7 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: remove_sensitive_data.handler
-      Runtime: python3.6
+      Runtime: python3.7
       Tracing: Active
       Timeout: 60
       Environment:
