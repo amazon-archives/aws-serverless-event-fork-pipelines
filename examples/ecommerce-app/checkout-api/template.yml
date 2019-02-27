@@ -10,8 +10,8 @@ Metadata:
       This serverless application is an example of using the Amazon SNS Fork pipelines in an e-commerce use case.
     Author: AWS
     SpdxLicenseId: MIT-0
-    LicenseUrl: ../../../../LICENSE
-    ReadmeUrl: ../README.md
+    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: README.md
     Labels: [sns, sns-fork-pattern, example, e-commerce]
     HomePageUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern
     SemanticVersion: 1.0.0
@@ -64,7 +64,7 @@ Resources:
   CheckoutPipeline:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../checkout-pipeline/dist/template.yml
+      Location: ../checkout-pipeline/.aws-sam/build/template.yaml
       Parameters:
         SNSTopicArn: !Ref CheckoutEventsTopic
         LogLevel: !Ref LogLevel
@@ -72,7 +72,7 @@ Resources:
   ReplayPipeline:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../../../pipelines/event-replay-pipeline/dist/template.yml
+      Location: ../../../pipelines/event-replay-pipeline/.aws-sam/build/template.yaml
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEventsTopic
@@ -82,7 +82,7 @@ Resources:
   BackupPipeline:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../../../pipelines/event-storage-backup-pipeline/dist/template.yml
+      Location: ../../../pipelines/event-storage-backup-pipeline/.aws-sam/build/template.yaml
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEventsTopic
@@ -95,7 +95,7 @@ Resources:
   AnalyticsPipeline:
     Type: AWS::Serverless::Application
     Properties:
-      Location: ../../../../pipelines/event-search-analytics-pipeline/dist/template.yml
+      Location: ../../../pipelines/event-search-analytics-pipeline/.aws-sam/build/template.yaml
       Parameters:
         LogLevel: !Ref LogLevel
         SNSTopicArn: !Ref CheckoutEventsTopic

@@ -106,3 +106,9 @@ venv.bak/
 *.sw[po]
 .DS_Store
 ~$*.ppt*
+
+# SAM CLI build dir
+.aws-sam
+
+# We're using pipenv so any requirements.txt files are auto-generated and should be ignored by git
+requirements.txt

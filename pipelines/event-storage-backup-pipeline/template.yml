@@ -12,8 +12,8 @@ Metadata:
       Firehose stream.
     Author: AWS
     SpdxLicenseId: MIT-0
-    LicenseUrl: ../../../LICENSE
-    ReadmeUrl: ../README.md
+    LicenseUrl: ../../LICENSE
+    ReadmeUrl: README.md
     Labels: [sns, sns-fork-pattern, event, backup]
     HomePageUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern
     SemanticVersion: 1.0.0
@@ -227,7 +227,7 @@ Resources:
     # TODO: uncomment once AWS::Serverless::Application supports Condition
     #Condition: FilterPolicyEnabled
     Properties:
-      Location: ../../../util/sns-subscription-filter-policy-string/dist/template.yml
+      Location: ../../util/sns-subscription-filter-policy-string/.aws-sam/build/template.yaml
       Parameters:
         SNSTopicArn: !Ref SNSTopicArn
         SubscriptionArn: !Ref BackupSubscription

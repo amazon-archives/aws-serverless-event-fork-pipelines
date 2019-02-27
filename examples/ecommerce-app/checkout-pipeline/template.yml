@@ -10,8 +10,8 @@ Metadata:
       This checkout pipeline is meant to be nested in the example e-commerce application that implements the Amazon SNS Fork pattern.
     Author: AWS
     SpdxLicenseId: MIT-0
-    LicenseUrl: ../../../../LICENSE
-    ReadmeUrl: ../README.md
+    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: README.md
     Labels: [sns, sns-fork-pattern, example, e-commerce]
     HomePageUrl: https://github.com/aws-samples/aws-serverless-sns-fork-pattern
     SemanticVersion: 1.0.0

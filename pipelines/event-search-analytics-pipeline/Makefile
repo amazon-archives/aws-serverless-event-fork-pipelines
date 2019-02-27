@@ -3,7 +3,8 @@ PY_VERSION := 3.7
 
 export PYTHONUNBUFFERED := 1
 
-BUILD_DIR := dist
+SRC_DIR := src
+SAM_DIR := .aws-sam
 
 # Required environment variables (user must override)
 
@@ -22,9 +23,10 @@ PYTHON := $(shell /usr/bin/which python$(PY_VERSION))
 .DEFAULT_GOAL := build
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -f $(SRC_DIR)/requirements.txt
+	rm -rf $(SAM_DIR)
 
-# used once just after project creation to lock and install dependencies
+# usedmonce just after project creation to lock and install dependencies
 bootstrap:
 	$(PYTHON) -m $(PIP) install pipenv --user
 	pipenv lock
@@ -36,20 +38,17 @@ init:
 	pipenv sync --dev
 
 compile:
-	mkdir -p $(BUILD_DIR)
 	pipenv run flake8 src
 	pipenv run pydocstyle src
 	pipenv run cfn-lint template.yml
 	pipenv run py.test --cov=src --cov-fail-under=85 -vv test/unit
+	pipenv lock --requirements > $(SRC_DIR)/requirements.txt
+	pipenv run sam build
 
 build: compile
 
 package: compile
-	cp -r template.yml src $(BUILD_DIR)
+	pipenv run sam package --s3-bucket $(PACKAGE_BUCKET) --output-template-file $(SAM_DIR)/packaged-template.yml
 
-	# package dependencies in lib dir
-	pipenv lock --requirements > $(BUILD_DIR)/requirements.txt
-	pipenv run pip install -t $(BUILD_DIR)/src/lib -r $(BUILD_DIR)/requirements.txt
-
-	# replace code local references with S3
-	pipenv run sam package --template-file $(BUILD_DIR)/template.yml --s3-bucket $(PACKAGE_BUCKET) --output-template-file $(BUILD_DIR)/packaged-template.yml
+publish: package
+	pipenv run sam publish --template $(SAM_DIR)/packaged-template.yml
