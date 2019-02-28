@@ -35,11 +35,11 @@ This app is meant to be used as part of a larger application, so the recommended
 
 ### Outputs
 
-1. `BackupBucketName` - Failed events backup bucket name.
-1. `BackupBucketArn` - Failed events backup bucket ARN.
-1. `ElasticsearchDomainName` - Name of Elasticsearch domain created by this app.
-1. `ElasticsearchDomainArn` - ARN of Elasticsearch domain created by this app.
-1. `ElasticsearchDomainEndpoint` - Endpoint of Elasticsearch domain created by this app.
+1. `AnalyticsDeadLetterBucketName` - Dead-letter S3 bucket name
+1. `AnalyticsDeadLetterBucketArn` - Dead-letter S3 bucket ARN
+1. `AnalyticsDomainName` - Analytics ES domain name (only output if this app created an ES domain)
+1. `AnalyticsDomainArn` - Analytics ES domain ARN (only output if this app created an ES domain)
+1. `AnalyticsDomainEndpoint` - Analytics ES domain endpoint (only output if this app created an ES domain)
 
 ## License Summary
 

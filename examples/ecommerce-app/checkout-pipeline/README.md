@@ -23,13 +23,13 @@ This app is not meant to be installed directly in isolation. It's used as a nest
 
 ## App Outputs
 
-1. `ProcessRecordsFunctionName` - Lambda function name.
-1. `ProcessRecordsFunctionArn` - Lambda function ARN.
-1. `OrdersName` - Orders table name.
-1. `OrdersArn` - Orders table ARN.
-1. `QueueUrl` - Checkout events queue URL.
-1. `QueueArn` - Checkout events queue ARN.
-1. `QueueName` - Checkout events queue name.
+1. `CheckoutFunctionName` - Checkout Lambda function name.
+1. `CheckoutFunctionArn` - Checkout Lambda function ARN.
+1. `CheckoutTableName` - Checkout DynamoDB table name.
+1. `CheckoutTableArn` - Checkout DynamoDB table ARN.
+1. `CheckoutQueueUrl` - Checkout SQS queue URL.
+1. `CheckoutQueueArn` - Checkout SQS queue ARN.
+1. `CheckoutQueueName` - Checkout SQS queue name.
 
 ## License Summary
 

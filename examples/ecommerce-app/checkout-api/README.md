@@ -28,14 +28,14 @@ This serverless application is an example of using the Amazon SNS Fork pipelines
 ## App Outputs
 
 1. `CheckoutApiUri` - Checkout API Prod stage URI.
-1. `CheckoutFunctionName` - Checkout API handler Function Name.
-1. `CheckoutFunctionArn` - Checkout API handler Function ARN.
-1. `CheckoutEventsTopicName` - Checkout events SNS Topic Name.
-1. `CheckoutEventsTopicArn` - Checkout events SNS Topic ARN.
+1. `CheckoutApiBackendFunctionName` - Checkout API handler Function Name.
+1. `CheckoutApiBackendFunctionArn` - Checkout API handler Function ARN.
+1. `CheckoutEventsTopicName` - Checkout events SNS topic name.
+1. `CheckoutEventsTopicArn` - Checkout events SNS topic ARN.
 
 ## Testing the app
 
-Once the app has been deployed to your account, go to the [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home) and find the top-level stack. It will be named something like aws-serverless-repository-fork-example-ecommerce-api. Click on the stack details and find the CheckoutApiUri output. This is the API endpoint to send checkout events to.
+Once the app has been deployed to your account, go to the [AWS CloudFormation console](https://console.aws.amazon.com/cloudformation/home) and find the top-level stack. It will be named something like serverlessrepo-fork-example-ecommerce-api. Click on the stack details and find the CheckoutApiUri output. This is the API endpoint to send checkout events to.
 
 Using a tool like curl or postman, send checkout events by POSTing to the endpoint. Checkout events must be in the following format:
 

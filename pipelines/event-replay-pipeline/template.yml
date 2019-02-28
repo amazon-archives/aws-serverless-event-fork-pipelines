@@ -138,5 +138,5 @@ Outputs:
     Description: Replay Lambda function ARN
     Value: !GetAtt ReplayFunction.Arn
   ReplayFunctionMappingId:
-    Description: Identifier of the event source mapping that connects the Lambda function to the SQS queue
+    Description: Identifier of the event source mapping that connects the Replay Lambda function to the SQS queue
     Value: !Ref ReplayFunctionMapping
