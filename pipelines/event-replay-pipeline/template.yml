@@ -100,7 +100,6 @@ Resources:
           LOG_LEVEL: !Ref LogLevel
           DESTINATION_SQS_QUEUE_NAME: !Ref DestinationQueueName
       Policies:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
         - Statement:
             Effect: Allow
             Action:
