@@ -24,12 +24,12 @@ Parameters:
     Description: SNS Topic ARN whose messages should be saved for replay.
     Type: String
   DestinationQueueName:
-    Description: >
+    Description: >-
       Name of destination SQS Queue where replay messages should be sent in a disaster recovery scenario. The app assumes the queue
       is in the same account and region as this app.
     Type: String
   SubscriptionFilterPolicy:
-    Description: >
+    Description: >-
       SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
       processed by this app. Since this app is used to buffer events for replay to another SQS queue that's also subscribed to the SNS topic,
       its subscription filter policy should match the subscription filter policy of the pipeline it will replay messages to. See
@@ -37,7 +37,7 @@ Parameters:
     Type: String
     Default: ''
   ReplayQueueRetentionPeriodInSeconds:
-    Description: >
+    Description: >-
       Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay queue.
     Type: Number
     MinValue: 60
@@ -48,10 +48,9 @@ Parameters:
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
     Default: INFO
 
-# TODO: uncomment once AWS::Serverless::Application supports Condition
-#Conditions:
-#  FilterPolicyEnabled:
-#    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+Conditions:
+  FilterPolicyEnabled:
+    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
 Resources:
   ReplaySubscription:
@@ -109,19 +108,17 @@ Resources:
               - sqs:SendMessage*
             Resource:
               - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DestinationQueueName}
-
-  ReplayFunctionMapping:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      BatchSize: 10
-      EventSourceArn: !GetAtt ReplayQueue.Arn
-      FunctionName: !Ref ReplayFunction
-      Enabled: false
+      Events:
+        Mapping:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ReplayQueue.Arn
+            BatchSize: 10
+            Enabled: false
 
   ReplaySubscriptionFilterPolicy:
     Type: AWS::Serverless::Application
-    # TODO: uncomment once AWS::Serverless::Application supports Condition
-    #Condition: FilterPolicyEnabled
+    Condition: FilterPolicyEnabled
     Properties:
       Location: ../../util/sns-subscription-filter-policy-string/.aws-sam/build/template.yaml
       Parameters:

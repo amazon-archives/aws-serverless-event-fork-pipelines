@@ -25,26 +25,21 @@ Parameters:
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
     Default: INFO
   TopicArn:
-    Description: >
+    Description: >-
       ARN of the SNS Topic being subscribed to.
     Type: String
   SubscriptionArn:
-    Description: >
+    Description: >-
       ARN of the SNS Topic Subscription to apply the filter policy to.
     Type: String
   SubscriptionFilterPolicy:
-    Description: >
+    Description: >-
       SNS Topic Subscription FilterPolicy as a JSON string. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
-
-# TODO: remove conditions once AWS::Serverless::Application supports Condition. Then parent app can set condition on the entire app.
-Conditions:
-  FilterPolicyEnabled:
-    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+    MinLength: 2
 
 Resources:
   FilterPolicy:
-    Condition: FilterPolicyEnabled
     Type: AWS::CloudFormation::CustomResource
     Properties:
       ServiceToken: !GetAtt SetFilterPolicy.Arn

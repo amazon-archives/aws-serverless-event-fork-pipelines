@@ -24,7 +24,7 @@ Parameters:
     Description: SNS Topic ARN whose messages should be backed up to S3.
     Type: String
   SubscriptionFilterPolicy:
-    Description: >
+    Description: >-
       SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
       processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
@@ -50,7 +50,7 @@ Parameters:
       - 'false'
     Default: 'false'
   StreamBufferingIntervalInSeconds:
-    Description: >
+    Description: >-
       Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
       See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details.
     Type: Number
@@ -58,7 +58,7 @@ Parameters:
     MaxValue: 900
     Default: 300
   StreamBufferingSizeInMBs:
-    Description: >
+    Description: >-
       Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationFunctionArn, you should
       not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details.
     Type: Number
@@ -66,7 +66,7 @@ Parameters:
     MaxValue: 128
     Default: 5
   DataTransformationFunctionArn:
-    Description: >
+    Description: >-
       ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
       Kinesis Firehose to transformation incoming events before they are saved to S3. For example, you could use this to remove sensitive
       data to meet compliance regulations.
@@ -82,9 +82,8 @@ Conditions:
     !Not [!Equals [!Ref DataTransformationFunctionArn, '']]
   BucketEncryptionEnabled:
     !Equals [!Ref EnableBucketEncryption, 'true']
-  # TODO: uncomment once AWS::Serverless::Application supports Condition
-  #FilterPolicyEnabled:
-  #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
+  FilterPolicyEnabled:
+    !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
 Resources:
   BackupSubscription:
@@ -224,8 +223,7 @@ Resources:
 
   BackupSubscriptionFilterPolicy:
     Type: AWS::Serverless::Application
-    # TODO: uncomment once AWS::Serverless::Application supports Condition
-    #Condition: FilterPolicyEnabled
+    Condition: FilterPolicyEnabled
     Properties:
       Location: ../../util/sns-subscription-filter-policy-string/.aws-sam/build/template.yaml
       Parameters:
