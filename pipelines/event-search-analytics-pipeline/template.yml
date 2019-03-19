@@ -20,16 +20,16 @@ Metadata:
     SourceCodeUrl: https://github.com/aws-samples/aws-serverless-event-fork-pipelines/tree/1.0.0/pipelines/event-search-analytics-pipeline
 
 Parameters:
-  SNSTopicArn:
+  TopicArn:
     Description: SNS Topic ARN whose events should be sent to Elasticsearch.
     Type: String
-  ElasticsearchIndexName:
+  SearchIndexName:
     Description: Elasticsearch index name to write to.
     Type: String
-  ElasticsearchTypeName:
+  SearchTypeName:
     Description: The Elasticsearch type name that Amazon ES adds to documents when indexing data.
     Type: String
-  ElasticsearchDomainArn:
+  SearchDomainArn:
     Description: >
       This parameter can be used to specify the ARN of an external Elasticsearch Domain that this app should write events to. If no value is given,
       the app creates its own ElasticSearch domain and writes events to it.
@@ -41,21 +41,21 @@ Parameters:
       processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
     Default: ''
-  ElasticsearchIndexRotationPeriod:
+  SearchIndexRotationPeriod:
     Description: The frequency of Elasticsearch index rotation.
     Type: String
     Default: NoRotation
-  RetryDurationInSeconds:
+  StreamRetryDurationInSeconds:
     Description: Number of seconds to retry if events cannot be written to Elasticsearch index.
     Type: Number
     MinValue: 0
     MaxValue: 7200
     Default: 300
-  BackupPrefix:
+  StreamPrefix:
     Description: Prefix used for S3 backup files (events are saved to S3 if they can't be written to the Elasticsearch cluster).
     Type: String
     Default: 'backup/'
-  BackupCompressionFormat:
+  StreamCompressionFormat:
     Description: Compression format for S3 backup files (events are saved to S3 if they can't be written to the Elasticsearch cluster).
     Type: String
     AllowedValues:
@@ -64,7 +64,7 @@ Parameters:
       - ZIP
       - Snappy
     Default: UNCOMPRESSED
-  BufferingIntervalInSeconds:
+  StreamBufferingIntervalInSeconds:
     Description: >
       Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
       See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details.
@@ -72,15 +72,15 @@ Parameters:
     MinValue: 60
     MaxValue: 900
     Default: 300
-  BufferingSizeInMBs:
+  StreamBufferingSizeInMBs:
     Description: >
-      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationLambdaFunctionArn, you should
+      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationFunctionArn, you should
       not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details.
     Type: Number
     MinValue: 1
     MaxValue: 128
     Default: 5
-  DataTransformationLambdaFunctionArn:
+  DataTransformationFunctionArn:
     Description: >
       ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
       Kinesis Firehose to transformation incoming events before they are saved to Elasticsearch. For example, you could use this to remove sensitive
@@ -97,9 +97,9 @@ Conditions:
   #FilterPolicyEnabled:
   #  !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
   DataTransformationEnabled:
-    !Not [!Equals [!Ref DataTransformationLambdaFunctionArn, '']]
+    !Not [!Equals [!Ref DataTransformationFunctionArn, '']]
   CreateAnalyticsDomain:
-    !Equals [!Ref ElasticsearchDomainArn, '']
+    !Equals [!Ref SearchDomainArn, '']
 
 Resources:
   AnalyticsSubscription:
@@ -108,7 +108,7 @@ Resources:
       Protocol: sqs
       Endpoint: !GetAtt AnalyticsQueue.Arn
       RawMessageDelivery: true
-      TopicArn: !Ref SNSTopicArn
+      TopicArn: !Ref TopicArn
 
   AnalyticsQueue:
     Type: AWS::SQS::Queue
@@ -132,7 +132,7 @@ Resources:
               - !GetAtt AnalyticsQueue.Arn
             Condition:
               ArnEquals:
-                aws:SourceArn: !Ref SNSTopicArn
+                aws:SourceArn: !Ref TopicArn
 
   AnalyticsFunction:
     Type: AWS::Serverless::Function
@@ -165,25 +165,25 @@ Resources:
     Properties:
       DeliveryStreamType: DirectPut
       ElasticsearchDestinationConfiguration:
-        DomainARN: !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref ElasticsearchDomainArn]
-        IndexName: !Ref ElasticsearchIndexName
-        TypeName: !Ref ElasticsearchTypeName
-        IndexRotationPeriod: !Ref ElasticsearchIndexRotationPeriod
+        DomainARN: !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref SearchDomainArn]
+        IndexName: !Ref SearchIndexName
+        TypeName: !Ref SearchTypeName
+        IndexRotationPeriod: !Ref SearchIndexRotationPeriod
         RetryOptions:
-          DurationInSeconds: !Ref RetryDurationInSeconds
+          DurationInSeconds: !Ref StreamRetryDurationInSeconds
         RoleARN: !GetAtt AnalyticsStreamRole.Arn
         BufferingHints:
-          IntervalInSeconds: !Ref BufferingIntervalInSeconds
-          SizeInMBs: !Ref BufferingSizeInMBs
+          IntervalInSeconds: !Ref StreamBufferingIntervalInSeconds
+          SizeInMBs: !Ref StreamBufferingSizeInMBs
         S3BackupMode: FailedDocumentsOnly
         S3Configuration:
           BucketARN: !GetAtt AnalyticsDeadLetterBucket.Arn
           RoleARN: !GetAtt AnalyticsStreamRole.Arn
-          Prefix: !Ref BackupPrefix
+          Prefix: !Ref StreamPrefix
           BufferingHints:
             IntervalInSeconds: 60
             SizeInMBs: 5
-          CompressionFormat: !Ref BackupCompressionFormat
+          CompressionFormat: !Ref StreamCompressionFormat
         ProcessingConfiguration: !If
           - DataTransformationEnabled
           - Enabled: true
@@ -191,7 +191,7 @@ Resources:
               - Type: Lambda
                 Parameters:
                   - ParameterName: LambdaArn
-                    ParameterValue: !Ref DataTransformationLambdaFunctionArn
+                    ParameterValue: !Ref DataTransformationFunctionArn
           - !Ref AWS::NoValue
 
   AnalyticsStreamRole:
@@ -239,17 +239,17 @@ Resources:
                   - es:ESHttpPut
                   - es:ESHttpPost
                 Resource:
-                  - !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref ElasticsearchDomainArn]
+                  - !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref SearchDomainArn]
                   - !Sub
                       - ${SearchDomainArn}/*
-                      - SearchDomainArn: !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref ElasticsearchDomainArn]
+                      - SearchDomainArn: !If [CreateAnalyticsDomain, !GetAtt AnalyticsDomain.DomainArn, !Ref SearchDomainArn]
               - !If
                   - DataTransformationEnabled
                   - Effect: Allow
                     Action:
                       - lambda:InvokeFunction
                     Resource:
-                      - !Ref DataTransformationLambdaFunctionArn
+                      - !Ref DataTransformationFunctionArn
                   - !Ref AWS::NoValue
 
   AnalyticsDeadLetterBucket:
@@ -262,7 +262,7 @@ Resources:
     Properties:
       Location: ../../util/sns-subscription-filter-policy-string/.aws-sam/build/template.yaml
       Parameters:
-        SNSTopicArn: !Ref SNSTopicArn
+        TopicArn: !Ref TopicArn
         SubscriptionArn: !Ref AnalyticsSubscription
         SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
         LogLevel: !Ref LogLevel

@@ -18,7 +18,7 @@ Metadata:
     SourceCodeUrl: https://github.com/aws-samples/aws-serverless-event-fork-pipelines/tree/1.0.0/examples/ecommerce-app/checkokut-pipeline
 
 Parameters:
-  SNSTopicArn:
+  TopicArn:
     Description: Checkout events SNS Topic ARN
     Type: String
   LogLevel:
@@ -33,7 +33,7 @@ Resources:
       Protocol: sqs
       Endpoint: !GetAtt CheckoutQueue.Arn
       RawMessageDelivery: true
-      TopicArn: !Ref SNSTopicArn
+      TopicArn: !Ref TopicArn
 
   CheckoutQueue:
     Type: AWS::SQS::Queue
@@ -57,7 +57,7 @@ Resources:
               - !GetAtt CheckoutQueue.Arn
             Condition:
               ArnEquals:
-                aws:SourceArn: !Ref SNSTopicArn
+                aws:SourceArn: !Ref TopicArn
 
   CheckoutFunction:
     Type: AWS::Serverless::Function

@@ -20,10 +20,10 @@ Metadata:
     SourceCodeUrl: https://github.com/aws-samples/aws-serverless-event-fork-pipelines/tree/1.0.0/pipelines/event-replay-pipeline
 
 Parameters:
-  SNSTopicArn:
+  TopicArn:
     Description: SNS Topic ARN whose messages should be saved for replay.
     Type: String
-  DestinationSQSQueueName:
+  DestinationQueueName:
     Description: >
       Name of destination SQS Queue where replay messages should be sent in a disaster recovery scenario. The app assumes the queue
       is in the same account and region as this app.
@@ -60,7 +60,7 @@ Resources:
       Protocol: sqs
       Endpoint: !GetAtt ReplayQueue.Arn
       RawMessageDelivery: true
-      TopicArn: !Ref SNSTopicArn
+      TopicArn: !Ref TopicArn
 
   ReplayQueue:
     Type: AWS::SQS::Queue
@@ -86,7 +86,7 @@ Resources:
               - !GetAtt ReplayQueue.Arn
             Condition:
               ArnEquals:
-                aws:SourceArn: !Ref SNSTopicArn
+                aws:SourceArn: !Ref TopicArn
 
   ReplayFunction:
     Type: AWS::Serverless::Function
@@ -99,7 +99,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL: !Ref LogLevel
-          DESTINATION_SQS_QUEUE_NAME: !Ref DestinationSQSQueueName
+          DESTINATION_SQS_QUEUE_NAME: !Ref DestinationQueueName
       Policies:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
         - Statement:
@@ -108,7 +108,7 @@ Resources:
               - sqs:GetQueueUrl
               - sqs:SendMessage*
             Resource:
-              - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DestinationSQSQueueName}
+              - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DestinationQueueName}
 
   ReplayFunctionMapping:
     Type: AWS::Lambda::EventSourceMapping
@@ -125,7 +125,7 @@ Resources:
     Properties:
       Location: ../../util/sns-subscription-filter-policy-string/.aws-sam/build/template.yaml
       Parameters:
-        SNSTopicArn: !Ref SNSTopicArn
+        TopicArn: !Ref TopicArn
         SubscriptionArn: !Ref ReplaySubscription
         SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
         LogLevel: !Ref LogLevel

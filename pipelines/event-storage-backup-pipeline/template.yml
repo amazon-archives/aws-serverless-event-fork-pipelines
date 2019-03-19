@@ -20,7 +20,7 @@ Metadata:
     SourceCodeUrl: https://github.com/aws-samples/aws-serverless-event-fork-pipelines/tree/1.0.0/pipelines/event-storage-backup-pipeline
 
 Parameters:
-  SNSTopicArn:
+  TopicArn:
     Description: SNS Topic ARN whose messages should be backed up to S3.
     Type: String
   SubscriptionFilterPolicy:
@@ -29,11 +29,11 @@ Parameters:
       processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
     Type: String
     Default: ''
-  BackupPrefix:
+  StreamPrefix:
     Description: Prefix used for S3 backup files
     Type: String
     Default: 'backup/'
-  BackupCompressionFormat:
+  StreamCompressionFormat:
     Description: Compression format for S3 backup files
     Type: String
     AllowedValues:
@@ -49,7 +49,7 @@ Parameters:
       - 'true'
       - 'false'
     Default: 'false'
-  BufferingIntervalInSeconds:
+  StreamBufferingIntervalInSeconds:
     Description: >
       Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
       See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details.
@@ -57,15 +57,15 @@ Parameters:
     MinValue: 60
     MaxValue: 900
     Default: 300
-  BufferingSizeInMBs:
+  StreamBufferingSizeInMBs:
     Description: >
-      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationLambdaFunctionArn, you should
+      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationFunctionArn, you should
       not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details.
     Type: Number
     MinValue: 1
     MaxValue: 128
     Default: 5
-  DataTransformationLambdaFunctionArn:
+  DataTransformationFunctionArn:
     Description: >
       ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
       Kinesis Firehose to transformation incoming events before they are saved to S3. For example, you could use this to remove sensitive
@@ -79,7 +79,7 @@ Parameters:
 
 Conditions:
   DataTransformationEnabled:
-    !Not [!Equals [!Ref DataTransformationLambdaFunctionArn, '']]
+    !Not [!Equals [!Ref DataTransformationFunctionArn, '']]
   BucketEncryptionEnabled:
     !Equals [!Ref EnableBucketEncryption, 'true']
   # TODO: uncomment once AWS::Serverless::Application supports Condition
@@ -93,7 +93,7 @@ Resources:
       Protocol: sqs
       Endpoint: !GetAtt BackupQueue.Arn
       RawMessageDelivery: true
-      TopicArn: !Ref SNSTopicArn
+      TopicArn: !Ref TopicArn
 
   BackupQueue:
     Type: AWS::SQS::Queue
@@ -117,7 +117,7 @@ Resources:
               - !GetAtt BackupQueue.Arn
             Condition:
               ArnEquals:
-                aws:SourceArn: !Ref SNSTopicArn
+                aws:SourceArn: !Ref TopicArn
 
   BackupFunction:
     Type: AWS::Serverless::Function
@@ -152,11 +152,11 @@ Resources:
       ExtendedS3DestinationConfiguration:
         BucketARN: !GetAtt BackupBucket.Arn
         RoleARN: !GetAtt BackupStreamRole.Arn
-        Prefix: !Ref BackupPrefix
+        Prefix: !Ref StreamPrefix
         BufferingHints:
-          IntervalInSeconds: !Ref BufferingIntervalInSeconds
-          SizeInMBs: !Ref BufferingSizeInMBs
-        CompressionFormat: !Ref BackupCompressionFormat
+          IntervalInSeconds: !Ref StreamBufferingIntervalInSeconds
+          SizeInMBs: !Ref StreamBufferingSizeInMBs
+        CompressionFormat: !Ref StreamCompressionFormat
         ProcessingConfiguration: !If
           - DataTransformationEnabled
           - Enabled: true
@@ -164,7 +164,7 @@ Resources:
               - Type: Lambda
                 Parameters:
                   - ParameterName: LambdaArn
-                    ParameterValue: !Ref DataTransformationLambdaFunctionArn
+                    ParameterValue: !Ref DataTransformationFunctionArn
           - !Ref AWS::NoValue
 
   BackupStreamRole:
@@ -209,7 +209,7 @@ Resources:
                     Action:
                       - lambda:InvokeFunction
                     Resource:
-                      - !Ref DataTransformationLambdaFunctionArn
+                      - !Ref DataTransformationFunctionArn
                   - !Ref AWS::NoValue
 
   BackupBucket:
@@ -229,7 +229,7 @@ Resources:
     Properties:
       Location: ../../util/sns-subscription-filter-policy-string/.aws-sam/build/template.yaml
       Parameters:
-        SNSTopicArn: !Ref SNSTopicArn
+        TopicArn: !Ref TopicArn
         SubscriptionArn: !Ref BackupSubscription
         SubscriptionFilterPolicy: !Ref SubscriptionFilterPolicy
         LogLevel: !Ref LogLevel

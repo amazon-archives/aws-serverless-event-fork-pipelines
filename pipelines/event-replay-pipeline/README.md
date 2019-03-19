@@ -18,8 +18,8 @@ This app is meant to be used as part of a larger application, so the recommended
 
 ### Parameters
 
-1. `SNSTopicArn` (required) - SNS Topic ARN whose events should be backed up to S3.
-1. `DestinationSQSQueueName` (required) - Name of destination SQS Queue where replay events should be sent in a disaster recovery scenario. The app assumes the queue is in the same account and region as this app.
+1. `TopicArn` (required) - SNS Topic ARN whose events should be backed up to S3.
+1. `DestinationQueueName` (required) - Name of destination SQS Queue where replay events should be sent in a disaster recovery scenario. The app assumes the queue is in the same account and region as this app.
 1. `SubscriptionFilterPolicy` (optional) - SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events processed by this app. See [the documentation](https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html) for details. The default behavior is to use no subscription filter policy so the app will backup all messages sent to the SNS topic.
 1. `ReplayQueueRetentionPeriodInSeconds` (optional) - Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay queue. If not specified, the default value of `1209600` (14 days) is used.
 1. `LogLevel` (optional) - Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc. Default: INFO.

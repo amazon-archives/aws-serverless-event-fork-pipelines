@@ -24,7 +24,7 @@ Parameters:
     Type: String
     Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
     Default: INFO
-  SNSTopicArn:
+  TopicArn:
     Description: >
       ARN of the SNS Topic being subscribed to.
     Type: String
@@ -68,7 +68,7 @@ Resources:
             Action:
               - sns:SetSubscriptionAttributes
             Resource:
-              - !Sub ${SNSTopicArn}
+              - !Sub ${TopicArn}
 
 Outputs:
   SetFilterPolicyFunctionName:
