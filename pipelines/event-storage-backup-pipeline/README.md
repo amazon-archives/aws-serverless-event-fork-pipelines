@@ -1,12 +1,12 @@
-## SNS Fork Pattern: Event Storage and Backup Pipeline
+## AWS Event Fork Pipelines: Event Storage and Backup Pipeline
 
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEVpU1Nmd0gzaEtUaE1XWGo3OVY3dmVDTVRBUllsUXFlbTZZQS9pZkRDaGhKZFZkczZEQVJLcEovQko3VmpYeHZrQ24wL041bWI4SWUyUUxJMDhHbXRBPSIsIml2UGFyYW1ldGVyU3BlYyI6IjZESXdFTTJBd2RWZGVKSXEiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-This Amazon SNS Fork pipeline backs up events from the given Amazon SNS topic to an Amazon S3 bucket, using an Amazon Kinesis Data Firehose stream.
+This AWS Event Fork Pipelines app backs up events from the given Amazon SNS topic to an Amazon S3 bucket, using an Amazon Kinesis Data Firehose stream.
 
 ## Architecture
 
-![SNS Fork Backup and Storage Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-storage-backup-pipeline/images/event-storage-backup-architecture.png)
+![AWS Event Fork Pipelines Backup and Storage Architecture](https://github.com/aws-samples/aws-serverless-event-fork-pipelines/raw/master/pipelines/event-storage-backup-pipeline/images/event-storage-backup-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
 1. An AWS Lambda function reads events from the SQS queue and publishes them to an Amazon Kinesis Data Firehose Delivery Stream, which saves them to an Amazon S3 bucket.

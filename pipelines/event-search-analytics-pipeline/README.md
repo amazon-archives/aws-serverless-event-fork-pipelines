@@ -1,12 +1,12 @@
-## SNS Fork Pattern: Event Search and Analytics Pipeline
+## AWS Event Fork Pipelines: Event Search and Analytics Pipeline
 
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEVpU1Nmd0gzaEtUaE1XWGo3OVY3dmVDTVRBUllsUXFlbTZZQS9pZkRDaGhKZFZkczZEQVJLcEovQko3VmpYeHZrQ24wL041bWI4SWUyUUxJMDhHbXRBPSIsIml2UGFyYW1ldGVyU3BlYyI6IjZESXdFTTJBd2RWZGVKSXEiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-This Amazon SNS Fork pipeline indexes events from the given Amazon SNS topic in an Amazon Elasticsearch Service domain for search and analytics, using an Amazon Kinesis Data Firehose stream.
+This AWS Event Fork Pipelines app indexes events from the given Amazon SNS topic into an Amazon Elasticsearch Service domain for search and analytics, using an Amazon Kinesis Data Firehose stream.
 
 ## Architecture
 
-![SNS Fork Search and Analytics Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-search-analytics-pipeline/images/event-search-analytics-architecture.png)
+![AWS Event Fork Pipelines Search and Analytics Architecture](https://github.com/aws-samples/aws-serverless-event-fork-pipelines/raw/master/pipelines/event-search-analytics-pipeline/images/event-search-analytics-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
 1. An AWS Lambda function reads events from the SQS queue and publishes them to an Amazon Kinesis Data Firehose Delivery Stream, which saves them to the given Amazon Elasticsearch Service Domain.

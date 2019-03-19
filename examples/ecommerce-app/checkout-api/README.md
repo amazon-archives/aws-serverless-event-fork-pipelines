@@ -1,12 +1,12 @@
-# SNS Fork Pattern: E-Commerce Example
+# AWS Event Fork Pipelines: E-Commerce Example
 
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEVpU1Nmd0gzaEtUaE1XWGo3OVY3dmVDTVRBUllsUXFlbTZZQS9pZkRDaGhKZFZkczZEQVJLcEovQko3VmpYeHZrQ24wL041bWI4SWUyUUxJMDhHbXRBPSIsIml2UGFyYW1ldGVyU3BlYyI6IjZESXdFTTJBd2RWZGVKSXEiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-This serverless application is an example of using the Amazon SNS Fork pipelines in an e-commerce use case.
+This serverless application is an example of using the AWS Event Fork Pipelines apps in an e-commerce use case.
 
 ## App Architecture
 
-![SNS Fork E-Commerce Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/examples/ecommerce-app/checkout-api/images/ecommerce-architecture.png)
+![AWS Event Fork Pipelines E-Commerce Architecture](https://github.com/aws-samples/aws-serverless-event-fork-pipelines/raw/master/examples/ecommerce-app/checkout-api/images/ecommerce-architecture.png)
 
 1. The e-commerce application takes orders from buyers through a RESTful API, which is hosted by Amazon API Gateway and is backed by an AWS Lambda function named “Checkout”.
 1. This function publishes all orders received to an Amazon SNS topic named “CheckoutEvents”, which in turn fans out the orders to four different pipelines.

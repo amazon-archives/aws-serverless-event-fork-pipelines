@@ -1,12 +1,12 @@
-## SNS Fork Pattern: Event Replay Pipeline
+## AWS Event Fork Pipelines: Event Replay Pipeline
 
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEVpU1Nmd0gzaEtUaE1XWGo3OVY3dmVDTVRBUllsUXFlbTZZQS9pZkRDaGhKZFZkczZEQVJLcEovQko3VmpYeHZrQ24wL041bWI4SWUyUUxJMDhHbXRBPSIsIml2UGFyYW1ldGVyU3BlYyI6IjZESXdFTTJBd2RWZGVKSXEiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-This Amazon SNS Fork pipeline buffers events from the given Amazon SNS topic into an Amazon SQS queue, so it can replay these events back to another pipeline in a disaster recovery scenario.
+This AWS Event Fork Pipelines app buffers events from the given Amazon SNS topic into an Amazon SQS queue, so it can replay these events back to another pipeline in a disaster recovery scenario.
 
 ## Architecture
 
-![SNS Fork Event Replay Pipeline Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/pipelines/event-replay-pipeline/images/event-replay-architecture.png)
+![AWS Event Fork Pipelines Replay Pipeline Architecture](https://github.com/aws-samples/aws-serverless-event-fork-pipelines/raw/master/pipelines/event-replay-pipeline/images/event-replay-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN with an optional subscription filter policy.
 1. An AWS Lambda function is mapped to the SQS queue, but the event source is initially disabled.

@@ -1,12 +1,12 @@
-# SNS Fork Pattern: E-Commerce Pipeline
+# AWS Event Fork Pipelines: E-Commerce Pipeline
 
 ![Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEVpU1Nmd0gzaEtUaE1XWGo3OVY3dmVDTVRBUllsUXFlbTZZQS9pZkRDaGhKZFZkczZEQVJLcEovQko3VmpYeHZrQ24wL041bWI4SWUyUUxJMDhHbXRBPSIsIml2UGFyYW1ldGVyU3BlYyI6IjZESXdFTTJBd2RWZGVKSXEiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-This checkout pipeline is meant to be nested in the example e-commerce application that implements the Amazon SNS Fork pattern.
+This checkout pipeline is meant to be nested in the example e-commerce application that demonstrates the AWS Event Fork Pipelines apps.
 
 ## App Architecture
 
-![SNS Fork Checkout Pipeline Architecture](https://github.com/aws-samples/aws-serverless-sns-fork-pattern/raw/master/examples/ecommerce-app/checkout-pipeline/images/checkout-pipeline-architecture.png)
+![AWS Event Fork Pipelines Checkout Pipeline Architecture](https://github.com/aws-samples/aws-serverless-event-fork-pipelines/raw/master/examples/ecommerce-app/checkout-pipeline/images/checkout-pipeline-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN of checkout events.
 1. An AWS Lambda function reads events from the SQS queue and writes order data to an Amazon DynamoDB table called "Orders".
