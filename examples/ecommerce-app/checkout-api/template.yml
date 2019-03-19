@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
+Description: >-
   This serverless application is an example of using AWS Event Fork Pipelines apps in an e-commerce use case.
 
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: fork-example-ecommerce-checkout-api
-    Description: >
+    Description: >-
       This serverless application is an example of using the AWS Event Fork Pipelines apps in an e-commerce use case.
     Author: AWS
     SpdxLicenseId: MIT-0

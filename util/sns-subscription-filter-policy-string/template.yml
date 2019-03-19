@@ -1,13 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
+Description: >-
   This utility app provides a custom resource that allows an SNS Topic Subscription's filter policy to be specified as a JSON string instead
   of a JSON object so it can be passed into apps as a template parameter.
 
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: sns-subscription-filter-policy-string
-    Description: >
+    Description: >-
       This utility app provides a custom resource that allows an SNS Topic Subscription's filter policy to be specified as a JSON string instead
       of a JSON object so it can be passed into apps as a template parameter.
     Author: AWS
