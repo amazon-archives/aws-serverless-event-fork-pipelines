@@ -90,7 +90,15 @@ Resources:
         DataTransformationFunctionArn: !GetAtt RemoveSensitiveDataFunction.Arn
         StreamBufferingIntervalInSeconds: '60'
         StreamBufferingSizeInMBs: '5'
-        EnableBucketEncryption: 'true'
+        BucketArn: !GetAtt BackupBucket.Arn
+  # Backup bucket with default encryption at rest enabled
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          ServerSideEncryptionByDefault:
+            SSEAlgorithm: aws:kms
 
   AnalyticsPipeline:
     Type: AWS::Serverless::Application

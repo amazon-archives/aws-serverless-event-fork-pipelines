@@ -42,13 +42,10 @@ Parameters:
       - ZIP
       - Snappy
     Default: UNCOMPRESSED
-  EnableBucketEncryption:
-    Description: Set to true to enable server-side encryption on the S3 backup bucket using the default aws/s3 AWS KMS master key.
+  BucketArn:
+    Description: "[Optional] The ARN of the S3 bucket to which incoming events are loaded. If you don't enter any value, then a new S3 bucket is created in your account."
     Type: String
-    AllowedValues:
-      - 'true'
-      - 'false'
-    Default: 'false'
+    Default: ''
   StreamBufferingIntervalInSeconds:
     Description: >-
       Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
@@ -80,8 +77,8 @@ Parameters:
 Conditions:
   DataTransformationEnabled:
     !Not [!Equals [!Ref DataTransformationFunctionArn, '']]
-  BucketEncryptionEnabled:
-    !Equals [!Ref EnableBucketEncryption, 'true']
+  CreateBackupBucket:
+    !Equals [!Ref BucketArn, '']
   FilterPolicyEnabled:
     !Not [!Equals [!Ref SubscriptionFilterPolicy, '']]
 
@@ -149,7 +146,7 @@ Resources:
     Properties:
       DeliveryStreamType: DirectPut
       ExtendedS3DestinationConfiguration:
-        BucketARN: !GetAtt BackupBucket.Arn
+        BucketARN: !If [CreateBackupBucket, !GetAtt BackupBucket.Arn, !Ref BucketArn]
         RoleARN: !GetAtt BackupStreamRole.Arn
         Prefix: !Ref StreamPrefix
         BufferingHints:
@@ -193,8 +190,10 @@ Resources:
                   - s3:ListBucketMultipartUploads
                   - s3:PutObject
                 Resource:
-                  - !GetAtt BackupBucket.Arn
-                  - !Sub ${BackupBucket.Arn}/*
+                  - !If [CreateBackupBucket, !GetAtt BackupBucket.Arn, !Ref BucketArn]
+                  - !Sub
+                      - ${BackupBucketArn}/*
+                      - BackupBucketArn: !If [CreateBackupBucket, !GetAtt BackupBucket.Arn, !Ref BucketArn]
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -213,13 +212,7 @@ Resources:
 
   BackupBucket:
     Type: AWS::S3::Bucket
-    Properties:
-      BucketEncryption: !If
-        - BucketEncryptionEnabled
-        - ServerSideEncryptionConfiguration:
-            - ServerSideEncryptionByDefault:
-                SSEAlgorithm: aws:kms
-        - !Ref AWS::NoValue
+    Condition: CreateBackupBucket
 
   BackupSubscriptionFilterPolicy:
     Type: AWS::Serverless::Application
@@ -234,8 +227,10 @@ Resources:
 
 Outputs:
   BackupBucketName:
+    Condition: CreateBackupBucket
     Description: Backup S3 bucket name
     Value: !Ref BackupBucket
   BackupBucketArn:
+    Condition: CreateBackupBucket
     Description: Backup S3 bucket ARN
     Value: !GetAtt BackupBucket.Arn
