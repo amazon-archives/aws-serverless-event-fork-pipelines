@@ -21,31 +21,24 @@ Metadata:
 
 Parameters:
   TopicArn:
-    Description: SNS Topic ARN whose messages should be saved for replay.
+    Description: The ARN of the SNS topic to which this instance of the pipeline should be subscribed.
     Type: String
   DestinationQueueName:
-    Description: >-
-      Name of destination SQS Queue where replay messages should be sent in a disaster recovery scenario. The app assumes the queue
-      is in the same account and region as this app.
+    Description: The name of the SQS queue to which the Lambda replay function forwards events, once the replay trigger is enabled. The queue must be in the same accout and region as this pipeline.
     Type: String
   SubscriptionFilterPolicy:
-    Description: >-
-      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
-      processed by this app. Since this app is used to buffer events for replay to another SQS queue that's also subscribed to the SNS topic,
-      its subscription filter policy should match the subscription filter policy of the pipeline it will replay messages to. See
-      https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+    Description: "[Optional] The SNS subscription filter policy, in JSON format, used for filtering the incoming events. The filter policy decides which events are processed by this pipeline. If you don’t enter any value, then no filtering is used, meaning all events are processed."
     Type: String
     Default: ''
   ReplayQueueRetentionPeriodInSeconds:
-    Description: >-
-      Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay queue.
+    Description: "[Optional] The amount of seconds for which the SQS replay queue should keep the incoming events. If you don’t enter any value, then 1,209,600 (14 days) is used."
     Type: Number
     MinValue: 60
     MaxValue: 1209600
     Default: 1209600
   LogLevel:
     Type: String
-    Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
+    Description: "[Optional] The level used for logging the execution of the Lambda function that polls events from the SQS queue. Four options are available, namely DEBUG, INFO, WARNING, and ERROR. If you don’t enter any value, then INFO is used."
     Default: INFO
 
 Conditions:

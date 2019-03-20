@@ -19,19 +19,19 @@ This app is meant to be used as part of a larger application, so the recommended
 
 ### Parameters
 
-1. `TopicArn` (required) - SNS Topic ARN whose events should be sent to the ElasticSearch domain.
-1. `SearchDomainArn` (required) - ARN of the Elasticsearch Domain to write to.
-1. `SearchIndexName` (required) - Elasticsearch index name to write to.
-1. `SearchTypeName` (required) - The Elasticsearch type name that Amazon ES adds to documents when indexing data.
-1. `SubscriptionFilterPolicy` (optional) - SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events processed by this app. See [the documentation](https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html) for details. The default behavior is to use no subscription filter policy so the app will backup all events sent to the SNS topic.
-1. `SearchIndexRotationPeriod` (optional) - The frequency of Elasticsearch index rotation. See [the documentation](https://docs.aws.amazon.com/firehose/latest/dev/basic-deliver.html#es-index-rotation) for details. If not specified, the default value of `NoRotation` is used.
-1. `StreamRetryDurationInSeconds` (optional) - Number of seconds to retry if events cannot be written to Elasticsearch index. Events that fail to get written to ElasticSearch are written to an S3 backup bucket created by the app. See [the documentation](https://docs.aws.amazon.com/firehose/latest/APIReference/API_ElasticsearchRetryOptions.html) for details. If not specified, the default value of 300 seconds (5 minutes) is used.
-1. `StreamPrefix` (optional) - A prefix that Kinesis Data Firehose adds to the files that it delivers to the Amazon S3 bucket (only used for events that cannot be delivered to the Elasticsearch cluster). If not specified, the default value of `backup/` is used.
-1. `StreamCompressionFormat` (optional) - The type of compression that Kinesis Data Firehose uses to compress the data that it delivers to the Amazon S3 bucket (only used for events that cannot be delivered to the Elasticsearch cluster). For valid values, see the `CompressionFormat` content for the [S3DestinationConfiguration](https://docs.aws.amazon.com/firehose/latest/APIReference/API_S3DestinationConfiguration.html) data type in the *Amazon Kinesis Data Firehose API Reference*.
-1. `StreamBufferingIntervalInSeconds` (optional) - Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination. See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details. If not specified, the defaut value of 300 (5 minutes) is used.
-1. `StreamBufferingSizeInMBs` (optional) - Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationFunctionArn, you should not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details. If not specified, the default value of 5 is used.
-1. `DataTransformationFunctionArn` (optional) - ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by Kinesis Firehose to transformation incoming events before they are saved to Elasticsearch. For example, you could use this to remove sensitive data to meet compliance regulations.
-1. `LogLevel` (optional) - Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc. Default: INFO.
+1. `TopicArn` (required) - The ARN of the SNS topic to which this instance of the pipeline should be subscribed.
+1. `SearchDomainArn` (required) - The ARN of the Elasticsearch domain to be used. A domain is an Elasticsearch cluster in the AWS cloud, setting the compute and storage configuration needed. If you don’t enter any value, then a new domain with default configuration is created in your account.
+1. `SearchIndexName` (required) - The name of the Elasticsearch index used for indexing the events, making them available for search and analytics. Max string length of 80, all lowecase, no special characters.
+1. `SearchTypeName` (required) - The name of the Elasticsearch type used for organizing the events in an index. Max string length of 100, all lowercase, not starting with an underscore.
+1. `SubscriptionFilterPolicy` (optional) - The SNS subscription filter policy, in JSON format, used for filtering the incoming events. The filter policy decides which events are processed by this pipeline. If you don’t enter any value, then no filtering is used, meaning all events are processed.
+1. `SearchIndexRotationPeriod` (optional) - The rotation period of the Elasticsearch index. Index rotation appends a timestamp to the index name, facilitating the expiration of old data. Five options are available, namely NoRotation, OneHour, OneDay, OneWeek, and OneMonth. If you don’t enter any value, then option NoRotation is used.
+1. `StreamRetryDurationInSeconds` (optional) - The retry duration for cases when the stream is unable to index events in the Elasticsearch index. If you don’t enter any value, then the pipeline sets 60 seconds.
+1. `StreamPrefix` (optional) - The string prefix used for naming files stored in the S3 bucket. If you don’t enter any value, then no prefix is used.
+1. `StreamCompressionFormat` (optional) - The format used for compressing the incoming events. Three options are available, namely GZIP, ZIP, and SNAPPY. If you don’t enter any value, then data compression is disabled.
+1. `StreamBufferingIntervalInSeconds` (optional) - The amount of seconds for which the stream should buffer incoming events before delivering them to the destination. Any integer value from 60 to 900 seconds. If you don't enter any value, then 300 is used.
+1. `StreamBufferingSizeInMBs` (optional) - The amount of data, in MB, that the stream should buffer before delivering them to the destination. Any integer value from 1 to 100. If you don't enter any value, then 5 is used.
+1. `DataTransformationFunctionArn` (optional) - The ARN of the Lambda function used for transforming the incoming events. If you don’t enter any value, then data transformation is disabled.
+1. `LogLevel` (optional) - The level used for logging the execution of the Lambda function that polls events from the SQS queue. Four options are available, namely DEBUG, INFO, WARNING, and ERROR. If you don’t enter any value, then INFO is used.
 
 ### Outputs
 

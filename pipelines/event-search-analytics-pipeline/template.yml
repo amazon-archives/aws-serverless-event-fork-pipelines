@@ -21,42 +21,46 @@ Metadata:
 
 Parameters:
   TopicArn:
-    Description: SNS Topic ARN whose events should be sent to Elasticsearch.
+    Description: The ARN of the SNS topic to which this instance of the pipeline should be subscribed.
     Type: String
   SearchIndexName:
-    Description: Elasticsearch index name to write to.
+    Description: The name of the Elasticsearch index used for indexing the events, making them available for search and analytics. Max string length of 80, all lowecase, no special characters.
     Type: String
+    MaxLength: 80
   SearchTypeName:
-    Description: The Elasticsearch type name that Amazon ES adds to documents when indexing data.
+    Description: The name of the Elasticsearch type used for organizing the events in an index. Max string length of 100, all lowercase, not starting with an underscore. 
     Type: String
+    MaxLength: 100
   SearchDomainArn:
-    Description: >-
-      This parameter can be used to specify the ARN of an external Elasticsearch Domain that this app should write events to. If no value is given,
-      the app creates its own ElasticSearch domain and writes events to it.
+    Description: "[Optional] The ARN of the Elasticsearch domain to be used. A domain is an Elasticsearch cluster in the AWS cloud, setting the compute and storage configuration needed. If you don’t enter any value, then a new domain with default configuration is created in your account."
     Type: String
     Default: ''
   SubscriptionFilterPolicy:
-    Description: >-
-      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events 
-      processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+    Description: "[Optional] The SNS subscription filter policy, in JSON format, used for filtering the incoming events. The filter policy decides which events are processed by this pipeline. If you don’t enter any value, then no filtering is used, meaning all events are processed."
     Type: String
     Default: ''
   SearchIndexRotationPeriod:
-    Description: The frequency of Elasticsearch index rotation.
+    Description: "[Optional] The rotation period of the Elasticsearch index. Index rotation appends a timestamp to the index name, facilitating the expiration of old data. Five options are available, namely NoRotation, OneHour, OneDay, OneWeek, and OneMonth. If you don’t enter any value, then option NoRotation is used."
     Type: String
+    AllowedValues:
+      - NoRotation
+      - OneHour
+      - OneDay
+      - OneWeek
+      - OneMonth
     Default: NoRotation
   StreamRetryDurationInSeconds:
-    Description: Number of seconds to retry if events cannot be written to Elasticsearch index.
+    Description: "[Optional] The retry duration for cases when the stream is unable to index events in the Elasticsearch index. If you don’t enter any value, then the pipeline sets 60 seconds."
     Type: Number
     MinValue: 0
     MaxValue: 7200
     Default: 300
   StreamPrefix:
-    Description: Prefix used for S3 backup files (events are saved to S3 if they can't be written to the Elasticsearch cluster).
+    Description: "[Optional] The string prefix used for naming files stored in the S3 bucket. If you don’t enter any value, then no prefix is used."
     Type: String
-    Default: 'backup/'
+    Default: ''
   StreamCompressionFormat:
-    Description: Compression format for S3 backup files (events are saved to S3 if they can't be written to the Elasticsearch cluster).
+    Description: "[Optional] The format used for compressing the incoming events. Three options are available, namely GZIP, ZIP, and SNAPPY. If you don’t enter any value, then data compression is disabled."
     Type: String
     AllowedValues:
       - UNCOMPRESSED
@@ -65,31 +69,24 @@ Parameters:
       - Snappy
     Default: UNCOMPRESSED
   StreamBufferingIntervalInSeconds:
-    Description: >-
-      Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
-      See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details.
+    Description: "[Optional] The amount of seconds for which the stream should buffer incoming events before delivering them to the destination. Any integer value from 60 to 900 seconds. If you don't enter any value, then 300 is used."
     Type: Number
     MinValue: 60
     MaxValue: 900
     Default: 300
   StreamBufferingSizeInMBs:
-    Description: >-
-      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationFunctionArn, you should
-      not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details.
+    Description: "[Optional] The amount of data, in MB, that the stream should buffer before delivering them to the destination. Any integer value from 1 to 100. If you don't enter any value, then 5 is used."
     Type: Number
     MinValue: 1
     MaxValue: 128
     Default: 5
   DataTransformationFunctionArn:
-    Description: >-
-      ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
-      Kinesis Firehose to transformation incoming events before they are saved to Elasticsearch. For example, you could use this to remove sensitive
-      data to meet compliance regulations.
+    Description: "[Optional] The ARN of the Lambda function used for transforming the incoming events. If you don’t enter any value, then data transformation is disabled."
     Type: String
     Default: ''
   LogLevel:
     Type: String
-    Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
+    Description: "[Optional] The level used for logging the execution of the Lambda function that polls events from the SQS queue. Four options are available, namely DEBUG, INFO, WARNING, and ERROR. If you don’t enter any value, then INFO is used."
     Default: INFO
 
 Conditions:

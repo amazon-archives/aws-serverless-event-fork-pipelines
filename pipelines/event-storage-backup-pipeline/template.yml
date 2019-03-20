@@ -21,20 +21,18 @@ Metadata:
 
 Parameters:
   TopicArn:
-    Description: SNS Topic ARN whose messages should be backed up to S3.
+    Description: The ARN of the SNS topic to which this instance of the pipeline should be subscribed.
     Type: String
   SubscriptionFilterPolicy:
-    Description: >-
-      SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for messages
-      processed by this app. See https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html for details.
+    Description: "[Optional] The SNS subscription filter policy, in JSON format, used for filtering the incoming events. The filter policy decides which events are processed by this pipeline. If you don’t enter any value, then no filtering is used, meaning all events are processed."
     Type: String
     Default: ''
   StreamPrefix:
-    Description: Prefix used for S3 backup files
+    Description: "[Optional] The string prefix used for naming files stored in the S3 bucket. If you don’t enter any value, then no prefix is used."
     Type: String
-    Default: 'backup/'
+    Default: ''
   StreamCompressionFormat:
-    Description: Compression format for S3 backup files
+    Description: "[Optional] The format used for compressing the incoming events. Three options are available, namely GZIP, ZIP, and SNAPPY. If you don’t enter any value, then data compression is disabled."
     Type: String
     AllowedValues:
       - UNCOMPRESSED
@@ -47,31 +45,24 @@ Parameters:
     Type: String
     Default: ''
   StreamBufferingIntervalInSeconds:
-    Description: >-
-      Buffer incoming data for the specified period of time, in seconds, before delivering it to the destination.
-      See https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html for details.
+    Description: "[Optional] The amount of seconds for which the stream should buffer incoming events before delivering them to the destination. Any integer value from 60 to 900 seconds. If you don't enter any value, then 300 is used."
     Type: Number
     MinValue: 60
     MaxValue: 900
     Default: 300
   StreamBufferingSizeInMBs:
-    Description: >-
-      Buffer incoming data to the specified size, in MBs, before delivering it to the destination. Note, if you specify a DataTransformationFunctionArn, you should
-      not set this higher than 6. See https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html for details.
+    Description: "[Optional] The amount of data, in MB, that the stream should buffer before delivering them to the destination. Any integer value from 1 to 100. If you don't enter any value, then 5 is used."
     Type: Number
     MinValue: 1
     MaxValue: 128
     Default: 5
   DataTransformationFunctionArn:
-    Description: >-
-      ARN of data transformation Lambda function. This optional parameter allows you to configure a Lambda function to be invoked by
-      Kinesis Firehose to transformation incoming events before they are saved to S3. For example, you could use this to remove sensitive
-      data to meet compliance regulations.
+    Description: "[Optional] The ARN of the Lambda function used for transforming the incoming events. If you don’t enter any value, then data transformation is disabled."
     Type: String
     Default: ''
   LogLevel:
     Type: String
-    Description: Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc
+    Description: "[Optional] The level used for logging the execution of the Lambda function that polls events from the SQS queue. Four options are available, namely DEBUG, INFO, WARNING, and ERROR. If you don’t enter any value, then INFO is used."
     Default: INFO
 
 Conditions:

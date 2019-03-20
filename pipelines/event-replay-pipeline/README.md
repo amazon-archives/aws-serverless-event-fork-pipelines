@@ -18,11 +18,11 @@ This app is meant to be used as part of a larger application, so the recommended
 
 ### Parameters
 
-1. `TopicArn` (required) - SNS Topic ARN whose events should be backed up to S3.
-1. `DestinationQueueName` (required) - Name of destination SQS Queue where replay events should be sent in a disaster recovery scenario. The app assumes the queue is in the same account and region as this app.
-1. `SubscriptionFilterPolicy` (optional) - SNS Topic Subscription FilterPolicy as a JSON string. This optional parameter allows you to configure message filtering for events processed by this app. See [the documentation](https://docs.aws.amazon.com/sns/latest/dg/message-filtering.html) for details. The default behavior is to use no subscription filter policy so the app will backup all messages sent to the SNS topic.
-1. `ReplayQueueRetentionPeriodInSeconds` (optional) - Retention period in seconds for the replay buffer SQS queue. This controls how long messages will be stored in the replay queue. If not specified, the default value of `1209600` (14 days) is used.
-1. `LogLevel` (optional) - Log level for Lambda function logging, e.g., ERROR, INFO, DEBUG, etc. Default: INFO.
+1. `TopicArn` (required) - The ARN of the SNS topic to which this instance of the pipeline should be subscribed.
+1. `DestinationQueueName` (required) - The name of the SQS queue to which the Lambda replay function forwards events, once the replay trigger is enabled. The queue must be in the same accout and region as this pipeline.
+1. `SubscriptionFilterPolicy` (optional) - The SNS subscription filter policy, in JSON format, used for filtering the incoming events. The filter policy decides which events are processed by this pipeline. If you don’t enter any value, then no filtering is used, meaning all events are processed.
+1. `ReplayQueueRetentionPeriodInSeconds` (optional) - The amount of seconds for which the SQS replay queue should keep the incoming events. If you don’t enter any value, then 1,209,600 (14 days) is used.
+1. `LogLevel` (optional) - The level used for logging the execution of the Lambda function that polls events from the SQS queue. Four options are available, namely DEBUG, INFO, WARNING, and ERROR. If you don’t enter any value, then INFO is used.
 
 ### Outputs
 
