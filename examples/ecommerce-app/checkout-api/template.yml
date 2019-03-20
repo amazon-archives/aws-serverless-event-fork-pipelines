@@ -97,8 +97,8 @@ Resources:
     Properties:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
-          ServerSideEncryptionByDefault:
-            SSEAlgorithm: aws:kms
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
 
   AnalyticsPipeline:
     Type: AWS::Serverless::Application
