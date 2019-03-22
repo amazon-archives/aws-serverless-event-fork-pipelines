@@ -50,7 +50,7 @@ Parameters:
       - OneMonth
     Default: NoRotation
   StreamRetryDurationInSeconds:
-    Description: "[Optional] The retry duration for cases when the stream is unable to index events in the Elasticsearch index. If you don’t enter any value, then the pipeline sets 60 seconds."
+    Description: "[Optional] The retry duration for cases when the stream is unable to index events in the Elasticsearch index. If you don’t enter any value, then the pipeline sets 300 seconds."
     Type: Number
     MinValue: 0
     MaxValue: 7200
