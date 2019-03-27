@@ -9,7 +9,7 @@ This checkout pipeline is meant to be nested in the example e-commerce applicati
 ![AWS Event Fork Pipelines Checkout Pipeline Architecture](https://github.com/aws-samples/aws-serverless-event-fork-pipelines/raw/master/examples/ecommerce-app/checkout-pipeline/images/checkout-pipeline-architecture.png)
 
 1. An Amazon SQS queue is subscribed to the given SNS Topic ARN of checkout events.
-1. An AWS Lambda function reads events from the SQS queue and writes order data to an Amazon DynamoDB table called "Orders".
+1. An AWS Lambda function reads events from the SQS queue and writes order data to an Amazon DynamoDB table called "CheckoutTable".
     1. The Lambda function provides an environment variable that allows a data corruption bug to be turned on and off in order to demo usage of the fork-event-replay-pipeline app.
 
 ## Installation Instructions
