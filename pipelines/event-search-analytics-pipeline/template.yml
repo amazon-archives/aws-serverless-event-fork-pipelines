@@ -270,9 +270,9 @@ Resources:
       ElasticsearchClusterConfig:
         InstanceCount: 2
         ZoneAwarenessEnabled: true
-        InstanceType: m3.medium.elasticsearch
+        InstanceType: t2.medium.elasticsearch
         DedicatedMasterEnabled: true
-        DedicatedMasterType: m3.medium.elasticsearch
+        DedicatedMasterType: t2.medium.elasticsearch
         DedicatedMasterCount: 3
       EBSOptions:
         EBSEnabled: true
